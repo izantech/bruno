@@ -6,6 +6,8 @@ import StyledWrapper from './StyledWrapper';
 import { IconReload } from '@tabler/icons';
 import { IconChevronDown, IconCheck } from '@tabler/icons';
 import Button from 'ui/Button/index';
+import ipc from 'utils/common/ipc';
+import { isElectron } from 'utils/common/platform';
 const { percentageToZoomLevel } = require('@usebruno/common');
 
 // Zoom options for dropdown (50% to 150%)
@@ -30,7 +32,6 @@ const Zoom = () => {
   const preferences = useSelector((state) => state.app.preferences);
   const dropdownRef = useRef(null);
   const dropdownMenuRef = useRef(null);
-  const { ipcRenderer } = window;
 
   // Get saved zoom percentage from Redux preferences (single source of truth)
   const savedZoom = get(preferences, 'display.zoomPercentage', DEFAULT_ZOOM);
@@ -61,9 +62,9 @@ const Zoom = () => {
 
   const handleSelect = (zoom) => {
     // Apply zoom level to Electron window immediately
-    if (ipcRenderer) {
+    if (isElectron()) {
       const zoomLevel = percentageToZoomLevel(zoom);
-      ipcRenderer.invoke('renderer:set-zoom-level', zoomLevel);
+      ipc.invoke('renderer:set-zoom-level', zoomLevel);
     }
 
     // Save to preferences via Redux (same pattern as layout)

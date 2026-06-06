@@ -14,6 +14,7 @@ import Button from 'ui/Button';
 import CollectionsList from './CollectionsList';
 import WorkspaceDocs from '../WorkspaceDocs';
 import StyledWrapper from './StyledWrapper';
+import ipc from 'utils/common/ipc';
 
 const WorkspaceOverview = ({ workspace }) => {
   const dispatch = useDispatch();
@@ -42,8 +43,7 @@ const WorkspaceOverview = ({ workspace }) => {
     }
 
     try {
-      const { ipcRenderer } = window;
-      await ipcRenderer.invoke('renderer:ensure-collections-folder', workspace.pathname);
+      await ipc.invoke('renderer:ensure-collections-folder', workspace.pathname);
       if (sidebarCollapsed) {
         dispatch(toggleSidebarCollapse());
       }

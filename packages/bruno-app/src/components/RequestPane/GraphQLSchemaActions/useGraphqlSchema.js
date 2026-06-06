@@ -3,6 +3,7 @@ import toast from 'react-hot-toast';
 import { buildClientSchema, buildSchema, validateSchema } from 'graphql';
 import { fetchGqlSchema } from 'utils/network';
 import { simpleHash, safeParseJSON } from 'utils/common';
+import ipc from 'utils/common/ipc';
 
 const buildAndValidateSchema = (data) => {
   let schema;
@@ -26,7 +27,6 @@ const buildAndValidateSchema = (data) => {
 const schemaHashPrefix = 'bruno.graphqlSchema';
 
 const useGraphqlSchema = (endpoint, environment, request, collection) => {
-  const { ipcRenderer } = window;
   const localStorageKey = `${schemaHashPrefix}.${simpleHash(endpoint)}`;
   const [error, setError] = useState(null);
   const [isLoading, setIsLoading] = useState(false);
@@ -64,7 +64,7 @@ const useGraphqlSchema = (endpoint, environment, request, collection) => {
   };
 
   const loadSchemaFromFile = async () => {
-    const schemaContent = await ipcRenderer.invoke('renderer:load-gql-schema-file');
+    const schemaContent = await ipc.invoke('renderer:load-gql-schema-file');
     if (!schemaContent) {
       setIsLoading(false);
       return;

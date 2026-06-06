@@ -6,6 +6,7 @@ import path from 'utils/common/path';
 import { browseDirectory, importCollection } from 'providers/ReduxStore/slices/collections/actions';
 import Modal from 'components/Modal';
 import { isElectron } from 'utils/common/platform';
+import ipc from 'utils/common/ipc';
 import { IconX, IconLoader2, IconCheck, IconCaretDown } from '@tabler/icons';
 import InfoTip from 'components/InfoTip/index';
 import Help from 'components/Help';
@@ -507,8 +508,6 @@ export const BulkImportCollectionLocation = ({
       return () => { };
     }
 
-    const { ipcRenderer } = window;
-
     const handleImportStatus = (collectionId, status, errorMessage = '') => {
       setStatus((prev) => ({ ...prev, [collectionId]: status }));
       if (status === STATUS.ERROR) {
@@ -519,25 +518,25 @@ export const BulkImportCollectionLocation = ({
       }
     };
 
-    const importingCollectionStarted = ipcRenderer.on(
+    const importingCollectionStarted = ipc.on(
       'main:collection-import-started',
       (collectionId) => {
         handleImportStatus(collectionId, STATUS.LOADING);
       }
     );
-    const importingCollectionCompleted = ipcRenderer.on(
+    const importingCollectionCompleted = ipc.on(
       'main:collection-import-ended',
       (collectionId) => {
         handleImportStatus(collectionId, STATUS.SUCCESS);
       }
     );
-    const importingCollectionFailed = ipcRenderer.on(
+    const importingCollectionFailed = ipc.on(
       'main:collection-import-failed',
       (collectionId, { message }) => {
         handleImportStatus(collectionId, STATUS.ERROR, message);
       }
     );
-    const allCollectionsImportCompleted = ipcRenderer.on(
+    const allCollectionsImportCompleted = ipc.on(
       'main:all-collections-import-ended',
       (report) => {
         toast.success(report?.message);

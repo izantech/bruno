@@ -12,6 +12,7 @@ import { exportApiSpec } from 'utils/exporters/openapi-spec';
 import { each } from 'lodash';
 import { showApiSpecPage } from 'providers/ReduxStore/slices/app';
 import { validateName, validateNameError } from 'utils/common/regex';
+import ipc from 'utils/common/ipc';
 
 export const getEnvironmentVariablesKeyValuePairs = (envVariables) => {
   let variables = {};
@@ -37,8 +38,7 @@ const CreateApiSpec = ({ onClose }) => {
     const getDefaultLocation = async () => {
       if (activeWorkspace && activeWorkspace.pathname && activeWorkspace.type !== 'default') {
         try {
-          const { ipcRenderer } = window;
-          const apiSpecPath = await ipcRenderer.invoke('renderer:ensure-apispec-folder', activeWorkspace.pathname);
+          const apiSpecPath = await ipc.invoke('renderer:ensure-apispec-folder', activeWorkspace.pathname);
           setDefaultApiSpecLocation(apiSpecPath);
         } catch (error) {
           console.error('Error getting apispec folder:', error);
@@ -148,8 +148,7 @@ const CreateApiSpec = ({ onClose }) => {
   useEffect(() => {
     const collectionLocation = formik.values.collectionLocation;
     if (collectionLocation) {
-      const { ipcRenderer } = window;
-      ipcRenderer
+      ipc
         .invoke('renderer:get-collection-json', collectionLocation)
         .then(({ files, name, envVariables, processEnvVariables }) => {
           setCollectionData({ name, files, envVariables, processEnvVariables });

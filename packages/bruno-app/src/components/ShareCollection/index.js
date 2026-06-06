@@ -10,6 +10,7 @@ import { transformCollectionToSaveToExportAsFile } from 'utils/collections/index
 import { useSelector } from 'react-redux';
 import { findCollectionByUid, areItemsLoading } from 'utils/collections/index';
 import toast from 'react-hot-toast';
+import ipc from 'utils/common/ipc';
 
 const EXPORT_FORMATS = {
   ZIP: 'zip',
@@ -47,8 +48,7 @@ const ShareCollection = ({ onClose, collectionUid }) => {
 
   const handleExportZip = async () => {
     try {
-      const { ipcRenderer } = window;
-      const result = await ipcRenderer.invoke('renderer:export-collection-zip', collection.pathname, collection.name);
+      const result = await ipc.invoke('renderer:export-collection-zip', collection.pathname, collection.name);
       if (result.success) {
         toast.success('Collection exported successfully');
       }

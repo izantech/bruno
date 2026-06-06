@@ -3,6 +3,7 @@ import { useDispatch } from 'react-redux';
 import toast from 'react-hot-toast';
 import { clearCollectionUpdate } from 'providers/ReduxStore/slices/openapi-sync';
 import { formatIpcError } from 'utils/common/error';
+import ipc from 'utils/common/ipc';
 
 const useSyncFlow = ({
   collection, specDrift, remoteDrift, collectionDrift,
@@ -25,8 +26,6 @@ const useSyncFlow = ({
     } = selections;
 
     try {
-      const { ipcRenderer } = window;
-
       let filteredDiff;
       let localOnlyToRemove;
       let driftedToReset;
@@ -62,7 +61,7 @@ const useSyncFlow = ({
         }) || [];
       }
 
-      await ipcRenderer.invoke('renderer:apply-openapi-sync', {
+      await ipc.invoke('renderer:apply-openapi-sync', {
         collectionUid: collection.uid,
         collectionPath: collection.pathname,
         addNewRequests: mode !== 'spec-only',

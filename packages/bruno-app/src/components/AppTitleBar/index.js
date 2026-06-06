@@ -23,7 +23,7 @@ import IconBottombarToggle from 'components/Icons/IconBottombarToggle/index';
 import AppMenu from './AppMenu';
 import StyledWrapper from './StyledWrapper';
 import ResponseLayoutToggle from 'components/ResponsePane/ResponseLayoutToggle';
-import { isMacOS, isWindowsOS, isLinuxOS } from 'utils/common/platform';
+import { isMacOS, isWindowsOS, isLinuxOS, isElectron } from 'utils/common/platform';
 import classNames from 'classnames';
 
 const getOsClass = () => {
@@ -50,10 +50,9 @@ const AppTitleBar = () => {
 
   // Listen for fullscreen changes
   useEffect(() => {
-    const { ipcRenderer } = window;
-    if (!ipcRenderer) return;
+    if (!isElectron()) return;
 
-    ipcRenderer.invoke('renderer:window-is-fullscreen')
+    ipc.invoke('renderer:window-is-fullscreen')
       .then((fullscreen) => {
         setIsFullScreen(fullscreen);
       })
@@ -61,11 +60,11 @@ const AppTitleBar = () => {
         console.error('Error getting initial fullscreen state:', error);
       });
 
-    const removeEnterFullScreenListener = ipcRenderer.on('main:enter-full-screen', () => {
+    const removeEnterFullScreenListener = ipc.on('main:enter-full-screen', () => {
       setIsFullScreen(true);
     });
 
-    const removeLeaveFullScreenListener = ipcRenderer.on('main:leave-full-screen', () => {
+    const removeLeaveFullScreenListener = ipc.on('main:leave-full-screen', () => {
       setIsFullScreen(false);
     });
 
@@ -77,10 +76,9 @@ const AppTitleBar = () => {
 
   useEffect(() => {
     if (!showWindowControls) return;
-    const { ipcRenderer } = window;
-    if (!ipcRenderer) return;
+    if (!isElectron()) return;
 
-    ipcRenderer.invoke('renderer:window-is-maximized')
+    ipc.invoke('renderer:window-is-maximized')
       .then((maximized) => {
         setIsMaximized(maximized);
       })
@@ -88,11 +86,11 @@ const AppTitleBar = () => {
         console.error('Error getting initial maximized state:', error);
       });
 
-    const removeMaximizedListener = ipcRenderer.on('main:window-maximized', () => {
+    const removeMaximizedListener = ipc.on('main:window-maximized', () => {
       setIsMaximized(true);
     });
 
-    const removeUnmaximizedListener = ipcRenderer.on('main:window-unmaximized', () => {
+    const removeUnmaximizedListener = ipc.on('main:window-unmaximized', () => {
       setIsMaximized(false);
     });
 

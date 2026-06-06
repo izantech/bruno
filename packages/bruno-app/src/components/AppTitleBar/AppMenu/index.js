@@ -3,10 +3,10 @@ import { IconMenu2 } from '@tabler/icons';
 import MenuDropdown from 'ui/MenuDropdown';
 import ActionIcon from 'ui/ActionIcon';
 import StyledWrapper from './StyledWrapper';
+import ipc from 'utils/common/ipc';
 
 const AppMenu = () => {
   const [isOpen, setIsOpen] = useState(false);
-  const { ipcRenderer } = window;
 
   const menuItems = [
     {
@@ -16,21 +16,21 @@ const AppMenu = () => {
         {
           id: 'open-collection',
           label: 'Open Collection',
-          onClick: () => ipcRenderer?.invoke('renderer:open-collection')
+          onClick: () => ipc.invoke('renderer:open-collection')
         },
         { type: 'divider', id: 'file-div-1' },
         {
           id: 'preferences',
           label: 'Preferences',
           rightSection: <span className="shortcut">Ctrl+,</span>,
-          onClick: () => ipcRenderer?.invoke('renderer:open-preferences')
+          onClick: () => ipc.invoke('renderer:open-preferences')
         },
         { type: 'divider', id: 'file-div-2' },
         {
           id: 'quit',
           label: 'Quit',
           rightSection: <span className="shortcut">Alt+F4</span>,
-          onClick: () => ipcRenderer?.send('renderer:window-close')
+          onClick: () => ipc.send('renderer:window-close')
         }
       ]
     },
@@ -86,33 +86,33 @@ const AppMenu = () => {
           id: 'toggle-devtools',
           label: 'Developer Tools',
           rightSection: <span className="shortcut">Ctrl+Shift+I</span>,
-          onClick: () => ipcRenderer?.invoke('renderer:toggle-devtools')
+          onClick: () => ipc.invoke('renderer:toggle-devtools')
         },
         { type: 'divider', id: 'view-div-1' },
         {
           id: 'reset-zoom',
           label: 'Reset Zoom',
           rightSection: <span className="shortcut">Ctrl+0</span>,
-          onClick: () => ipcRenderer?.invoke('renderer:reset-zoom')
+          onClick: () => ipc.invoke('renderer:reset-zoom')
         },
         {
           id: 'zoom-in',
           label: 'Zoom In',
           rightSection: <span className="shortcut">Ctrl++</span>,
-          onClick: () => ipcRenderer?.invoke('renderer:zoom-in')
+          onClick: () => ipc.invoke('renderer:zoom-in')
         },
         {
           id: 'zoom-out',
           label: 'Zoom Out',
           rightSection: <span className="shortcut">Ctrl+-</span>,
-          onClick: () => ipcRenderer?.invoke('renderer:zoom-out')
+          onClick: () => ipc.invoke('renderer:zoom-out')
         },
         { type: 'divider', id: 'view-div-2' },
         {
           id: 'toggle-fullscreen',
           label: 'Full Screen',
           rightSection: <span className="shortcut">F11</span>,
-          onClick: () => ipcRenderer?.invoke('renderer:toggle-fullscreen')
+          onClick: () => ipc.invoke('renderer:toggle-fullscreen')
         }
       ]
     },
@@ -123,12 +123,12 @@ const AppMenu = () => {
         {
           id: 'about',
           label: 'About Bruno',
-          onClick: () => ipcRenderer?.invoke('renderer:open-about')
+          onClick: () => ipc.invoke('renderer:open-about')
         },
         {
           id: 'documentation',
           label: 'Documentation',
-          onClick: () => ipcRenderer?.invoke('renderer:open-docs')
+          onClick: () => ipc.invoke('renderer:open-docs')
         }
       ]
     }

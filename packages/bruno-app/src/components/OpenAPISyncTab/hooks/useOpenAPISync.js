@@ -16,6 +16,7 @@ import { isHttpUrl } from 'utils/url/index';
 import { flattenItems } from 'utils/collections/index';
 import { formatIpcError } from 'utils/common/error';
 import { countEndpoints } from '../utils';
+import ipc from 'utils/common/ipc';
 
 const useOpenAPISync = (collection) => {
   const dispatch = useDispatch();
@@ -107,8 +108,7 @@ const useOpenAPISync = (collection) => {
     if (clear) updateDrift({ collectionDrift: null });
     setIsDriftLoading(true);
     try {
-      const { ipcRenderer } = window;
-      const result = await ipcRenderer.invoke('renderer:get-collection-drift', {
+      const result = await ipc.invoke('renderer:get-collection-drift', {
         collectionPath: collection.pathname
       });
 
@@ -136,8 +136,7 @@ const useOpenAPISync = (collection) => {
     updateDrift({ fetching: true });
 
     try {
-      const { ipcRenderer } = window;
-      const result = await ipcRenderer.invoke('renderer:compare-openapi-specs', {
+      const result = await ipc.invoke('renderer:compare-openapi-specs', {
         collectionUid: collection.uid,
         collectionPath: collection.pathname,
         sourceUrl: effectiveUrl,
@@ -167,7 +166,7 @@ const useOpenAPISync = (collection) => {
 
       // Fetch remote drift (remote spec vs collection) for collection-centric categorization
       if (result.newSpec) {
-        const remoteComparison = await ipcRenderer.invoke('renderer:get-collection-drift', {
+        const remoteComparison = await ipc.invoke('renderer:get-collection-drift', {
           collectionPath: collection.pathname,
           compareSpec: result.newSpec
         });
@@ -238,10 +237,8 @@ const useOpenAPISync = (collection) => {
         }
       }
 
-      const { ipcRenderer } = window;
-
       // Validate the spec first
-      const result = await ipcRenderer.invoke('renderer:compare-openapi-specs', {
+      const result = await ipc.invoke('renderer:compare-openapi-specs', {
         collectionUid: collection.uid,
         collectionPath: collection.pathname,
         sourceUrl: trimmedUrl,
@@ -260,7 +257,7 @@ const useOpenAPISync = (collection) => {
       }
 
       // Save sync config (no spec file yet — deferred to first sync unless collection already matches)
-      await ipcRenderer.invoke('renderer:update-openapi-sync-config', {
+      await ipc.invoke('renderer:update-openapi-sync-config', {
         collectionPath: collection.pathname,
         config: {
           sourceUrl: trimmedUrl,
@@ -272,7 +269,7 @@ const useOpenAPISync = (collection) => {
 
       // Check if collection already matches the spec
       if (result.newSpec) {
-        const initialDrift = await ipcRenderer.invoke('renderer:get-collection-drift', {
+        const initialDrift = await ipc.invoke('renderer:get-collection-drift', {
           collectionPath: collection.pathname,
           compareSpec: result.newSpec
         });
@@ -284,7 +281,7 @@ const useOpenAPISync = (collection) => {
 
         if (isInSync) {
           // Collection matches — save spec file silently to complete setup
-          await ipcRenderer.invoke('renderer:save-openapi-spec', {
+          await ipc.invoke('renderer:save-openapi-spec', {
             collectionPath: collection.pathname,
             specContent: result.newSpecContent || JSON.stringify(result.newSpec, null, 2)
           });
@@ -302,8 +299,7 @@ const useOpenAPISync = (collection) => {
 
   const handleDisconnect = async () => {
     try {
-      const { ipcRenderer } = window;
-      await ipcRenderer.invoke('renderer:remove-openapi-sync-config', {
+      await ipc.invoke('renderer:remove-openapi-sync-config', {
         collectionPath: collection.pathname,
         deleteSpecFile: true
       });
@@ -337,8 +333,7 @@ const useOpenAPISync = (collection) => {
     const currentSpecDrift = specDriftRef.current;
     if (currentSpecDrift?.newSpec) {
       try {
-        const { ipcRenderer } = window;
-        const remoteComparison = await ipcRenderer.invoke('renderer:get-collection-drift', {
+        const remoteComparison = await ipc.invoke('renderer:get-collection-drift', {
           collectionPath: collection.pathname,
           compareSpec: currentSpecDrift.newSpec
         });
@@ -372,9 +367,7 @@ const useOpenAPISync = (collection) => {
     }
 
     try {
-      const { ipcRenderer } = window;
-
-      await ipcRenderer.invoke('renderer:update-openapi-sync-config', {
+      await ipc.invoke('renderer:update-openapi-sync-config', {
         collectionPath: collection.pathname,
         config: {
           sourceUrl: newUrl,

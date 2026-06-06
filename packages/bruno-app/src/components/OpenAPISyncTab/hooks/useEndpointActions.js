@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import toast from 'react-hot-toast';
+import ipc from 'utils/common/ipc';
 
 const useEndpointActions = (collection, collectionDrift, reloadDrift) => {
   const [pendingAction, setPendingAction] = useState(null);
@@ -7,12 +8,11 @@ const useEndpointActions = (collection, collectionDrift, reloadDrift) => {
   // Action execution helper — runs IPC call(s), shows toast, reloads drift
   const executeEndpointAction = async (ipcCalls, successMsg, errorMsg) => {
     try {
-      const { ipcRenderer } = window;
       if (Array.isArray(ipcCalls[0])) {
-        await Promise.all(ipcCalls.map(([channel, params]) => ipcRenderer.invoke(channel, params)));
+        await Promise.all(ipcCalls.map(([channel, params]) => ipc.invoke(channel, params)));
       } else {
         const [channel, params] = ipcCalls;
-        await ipcRenderer.invoke(channel, params);
+        await ipc.invoke(channel, params);
       }
       toast.success(successMsg);
       await reloadDrift();

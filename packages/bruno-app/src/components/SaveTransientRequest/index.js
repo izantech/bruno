@@ -18,6 +18,7 @@ import { newFolder, closeTabs, mountCollection, createCollection, browseDirector
 import { sanitizeName, validateName, validateNameError } from 'utils/common/regex';
 import { resolveRequestFilename } from 'utils/common/platform';
 import path, { normalizePath } from 'utils/common/path';
+import ipc from 'utils/common/ipc';
 import { transformRequestToSaveToFilesystem, findCollectionByUid, findItemInCollection, areItemsLoading } from 'utils/collections';
 import { DEFAULT_COLLECTION_FORMAT } from 'utils/common/constants';
 import { itemSchema } from '@usebruno/schema';
@@ -183,8 +184,6 @@ const SaveTransientRequest = ({ item: itemProp, collection: collectionProp, isOp
     const targetCollection = selectedTargetCollection || collection;
 
     try {
-      const { ipcRenderer } = window;
-
       const selectedFolder = getCurrentSelectedFolder();
       const targetDirname = selectedFolder ? selectedFolder.pathname : targetCollection.pathname;
 
@@ -213,7 +212,7 @@ const SaveTransientRequest = ({ item: itemProp, collection: collectionProp, isOp
       const targetFilename = resolveRequestFilename(sanitizedFilename, targetFormat);
       const targetPathname = path.join(targetDirname, targetFilename);
 
-      await ipcRenderer.invoke('renderer:save-transient-request', {
+      await ipc.invoke('renderer:save-transient-request', {
         sourcePathname: item.pathname,
         targetDirname,
         targetFilename,

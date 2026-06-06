@@ -1,6 +1,8 @@
 import React, { useEffect, useState, useMemo } from 'react';
 import { useSelector } from 'react-redux';
 import StyledWrapper from './StyledWrapper';
+import ipc from 'utils/common/ipc';
+import { isElectron } from 'utils/common/platform';
 import {
   IconCpu,
   IconDatabase,
@@ -25,16 +27,14 @@ const Performance = () => {
   const [selectedPid, setSelectedPid] = useState('cumulative');
 
   useEffect(() => {
-    const { ipcRenderer } = window;
-
-    if (!ipcRenderer) {
+    if (!isElectron()) {
       console.warn('IPC Renderer not available');
       return;
     }
 
     const startMonitoring = async () => {
       try {
-        await ipcRenderer.invoke('renderer:start-system-monitoring', 2000);
+        await ipc.invoke('renderer:start-system-monitoring', 2000);
       } catch (error) {
         console.error('Failed to start system monitoring:', error);
       }
@@ -42,7 +42,7 @@ const Performance = () => {
 
     const stopMonitoring = async () => {
       try {
-        await ipcRenderer.invoke('renderer:stop-system-monitoring');
+        await ipc.invoke('renderer:stop-system-monitoring');
       } catch (error) {
         console.error('Failed to stop system monitoring:', error);
       }

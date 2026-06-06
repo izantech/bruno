@@ -6,6 +6,7 @@ import fastJsonFormat from 'fast-json-format';
 import SpecViewer from 'components/ApiSpecPanel/SpecViewer';
 import StyledWrapper from 'components/ApiSpecPanel/StyledWrapper';
 import { updateApiSpecTabLeftPaneWidth } from 'providers/ReduxStore/slices/tabs';
+import ipc from 'utils/common/ipc';
 
 /**
  * Pretty-print JSON content for readable display. YAML content is returned as-is.
@@ -54,14 +55,13 @@ const OpenAPISpecTab = ({ collection, tabUid }) => {
     setError(null);
     setIsRemote(false);
     try {
-      const { ipcRenderer } = window;
-      const result = await ipcRenderer.invoke('renderer:read-openapi-spec', {
+      const result = await ipc.invoke('renderer:read-openapi-spec', {
         collectionPath: collection.pathname
       });
       if (result.error) {
         // Local file not found — fall back to fetching from remote URL
         if (sourceUrl) {
-          const fetchResult = await ipcRenderer.invoke('renderer:fetch-openapi-spec', {
+          const fetchResult = await ipc.invoke('renderer:fetch-openapi-spec', {
             collectionUid: collection.uid,
             collectionPath: collection.pathname,
             sourceUrl,

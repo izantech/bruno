@@ -13,6 +13,7 @@ import { formatIpcError } from 'utils/common/error';
 import StatusBadge from 'ui/StatusBadge';
 import Help from 'components/Help';
 import EndpointVisualDiff from './EndpointVisualDiff';
+import ipc from 'utils/common/ipc';
 
 // Expandable row - can be used with or without decision buttons
 const ExpandableEndpointRow = ({ endpoint, decision, onDecisionChange, collectionPath, newSpec, showDecisions = true, decisionLabels, diffLeftLabel, diffRightLabel, swapDiffSides, collectionUid, actions }) => {
@@ -32,8 +33,7 @@ const ExpandableEndpointRow = ({ endpoint, decision, onDecisionChange, collectio
     setError(null);
 
     try {
-      const { ipcRenderer } = window;
-      const result = await ipcRenderer.invoke('renderer:get-endpoint-diff-data', {
+      const result = await ipc.invoke('renderer:get-endpoint-diff-data', {
         collectionPath,
         endpointId: endpoint.id,
         newSpec
