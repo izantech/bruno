@@ -21,7 +21,7 @@ module.exports = runESMImports().then(() => defineConfig([
       'packages/bruno-app/public/static/**/*',
       'packages/bruno-app/.next/**/*',
       'packages/bruno-electron/web/**/*',
-      'packages/bruno-ios/**/*.ts'
+      'packages/bruno-ios/**/__tests__/**/*.ts'
     ]
   },
   {
@@ -47,6 +47,7 @@ module.exports = runESMImports().then(() => defineConfig([
       'packages/bruno-converters/**/*.js',
       'packages/bruno-electron/**/*.js',
       'packages/bruno-filestore/**/*.ts',
+      'packages/bruno-ios/src/**/*.ts',
       'packages/bruno-schema-types/**/*.ts',
       'packages/bruno-js/**/*.js',
       'packages/bruno-lang/**/*.js',
@@ -209,6 +210,25 @@ module.exports = runESMImports().then(() => defineConfig([
         ecmaVersion: 'latest',
         sourceType: 'module',
         project: './packages/bruno-filestore/tsconfig.json'
+      }
+    },
+    rules: {
+      'no-undef': 'error'
+    }
+  },
+  {
+    files: ['packages/bruno-ios/src/**/*.ts'],
+    ignores: ['**/*.config.ts', '**/__tests__/**/*', '**/dist/**/*'],
+    languageOptions: {
+      globals: {
+        ...globals.node,
+        ...globals.jest
+      },
+      parser: require('@typescript-eslint/parser'),
+      parserOptions: {
+        ecmaVersion: 'latest',
+        sourceType: 'module',
+        project: './packages/bruno-ios/tsconfig.json'
       }
     },
     rules: {

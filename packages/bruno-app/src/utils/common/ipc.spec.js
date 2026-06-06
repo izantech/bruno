@@ -1,10 +1,37 @@
-import ipc, { callIpc, __resetIpcForTests } from './ipc';
+import ipc, { callIpc, collectionRootFor, __resetIpcForTests } from './ipc';
+
+const mockPlugin = {
+  scanWorkspace: jest.fn(),
+  readDirTree: jest.fn(),
+  readFile: jest.fn(),
+  writeFile: jest.fn(),
+  deleteEntry: jest.fn(),
+  mkdir: jest.fn(),
+  rename: jest.fn(),
+  copyTree: jest.fn(),
+  stat: jest.fn(),
+  exists: jest.fn(),
+  mountCollection: jest.fn(),
+  snapshotGet: jest.fn(),
+  snapshotSave: jest.fn(),
+  getDocumentsRoot: jest.fn(),
+  addListener: jest.fn(() => Promise.resolve({ remove: jest.fn() })),
+  removeAllListeners: jest.fn()
+};
 
 beforeEach(() => {
   __resetIpcForTests();
   delete window.ipcRenderer;
   delete window.Capacitor;
+  jest.clearAllMocks();
 });
+
+const withCapacitor = () => {
+  window.Capacitor = {
+    isNativePlatform: () => true,
+    Plugins: { BrunoFilesystem: mockPlugin }
+  };
+};
 
 describe('backend selection', () => {
   it('selects electron when window.ipcRenderer is present', () => {
@@ -19,7 +46,7 @@ describe('backend selection', () => {
   });
 
   it('selects capacitor when Capacitor.isNativePlatform() is true', () => {
-    window.Capacitor = { isNativePlatform: () => true };
+    withCapacitor();
     expect(ipc.platform).toBe('capacitor');
   });
 
@@ -35,7 +62,7 @@ describe('backend selection', () => {
       getFilePath: jest.fn(),
       openExternal: jest.fn()
     };
-    window.Capacitor = { isNativePlatform: () => true };
+    withCapacitor();
     expect(ipc.platform).toBe('electron');
   });
 });
@@ -118,5 +145,38 @@ describe('callIpc', () => {
     const result = await callIpc('some:channel', 'arg');
     expect(window.ipcRenderer.invoke).toHaveBeenCalledWith('some:channel', 'arg');
     expect(result).toBe('result');
+  });
+});
+
+describe('collectionRootFor', () => {
+  it('returns the registered root for a nested item path', () => {
+    const roots = new Set(['@documents/MyCol']);
+    expect(collectionRootFor('@documents/MyCol/sub/req.bru', roots)).toBe('@documents/MyCol');
+  });
+
+  it('returns the root token itself when the item IS the root', () => {
+    const roots = new Set(['@documents/MyCol']);
+    expect(collectionRootFor('@documents/MyCol', roots)).toBe('@documents/MyCol');
+  });
+
+  it('picks the longest matching root for a transient deep path', () => {
+    const tmpRoot = '@documents/tmp/BBBBBBBB-2222/MyCol';
+    const roots = new Set(['@documents/MyCol', tmpRoot]);
+    expect(collectionRootFor(`${tmpRoot}/req.bru`, roots)).toBe(tmpRoot);
+  });
+
+  it('does not match a root that is only a partial segment prefix', () => {
+    const roots = new Set(['@documents/My']);
+    expect(collectionRootFor('@documents/MyCol/req.bru', roots)).not.toBe('@documents/My');
+  });
+
+  it('falls back to the first @documents segment when no root is registered', () => {
+    const roots = new Set();
+    expect(collectionRootFor('@documents/MyCol/sub/req.bru', roots)).toBe('@documents/MyCol');
+  });
+
+  it('fallback returns correct root for a transient path with no registry', () => {
+    const roots = new Set();
+    expect(collectionRootFor('@documents/tmp', roots)).toBe('@documents/tmp');
   });
 });
