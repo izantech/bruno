@@ -13,7 +13,7 @@ const useIpcEvents = () => {
       return () => {};
     }
 
-    ipc.invoke('renderer:ready');
+    ipc.invoke('renderer:ready').catch(() => {});
 
     return subscribeIpcEvents(ipc, { dispatch, store });
   }, [dispatch, store]);

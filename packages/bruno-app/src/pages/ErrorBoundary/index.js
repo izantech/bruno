@@ -23,17 +23,17 @@ class ErrorBoundary extends React.Component {
   }
 
   async clearCache() {
-    await ipc.invoke('main:cache-clear');
+    await ipc.invoke('main:cache-clear').catch(() => {});
   }
 
   returnToApp() {
-    ipc.invoke('open-file');
+    ipc.invoke('open-file').catch(() => {});
 
     this.setState({ hasError: false, error: null, errorInfo: null });
   }
 
   forceQuit() {
-    ipc.invoke('main:force-quit');
+    ipc.invoke('main:force-quit').catch(() => {});
   }
 
   render() {
