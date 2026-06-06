@@ -5,6 +5,8 @@ import { parseToRgb } from 'polished';
 import themes from 'themes/index';
 import themeSchema from 'themes/schema';
 import useLocalStorage from 'hooks/useLocalStorage/index';
+import { isElectron } from 'utils/common/platform';
+import ipc from 'utils/common/ipc';
 
 import { createContext, useContext, useEffect, useState, useMemo } from 'react';
 import { ThemeProvider as SCThemeProvider } from 'styled-components';
@@ -52,14 +54,14 @@ export const ThemeProvider = (props) => {
     setDisplayedTheme(effectiveTheme);
     applyThemeToRoot(effectiveTheme);
 
-    if (window.ipcRenderer) {
+    if (isElectron()) {
       const isLight = effectiveTheme === 'light';
       const variantName = isLight ? themeVariantLight : themeVariantDark;
       const rawBg = themes[variantName]?.bg || (isLight ? '#ffffff' : '#1e1e1e');
       // Convert to hex — Electron's backgroundColor only accepts hex colors
       const { red, green, blue } = parseToRgb(rawBg);
       const themeBg = `#${[red, green, blue].map((c) => c.toString(16).padStart(2, '0')).join('')}`;
-      window.ipcRenderer.send('renderer:theme-change', storedTheme, themeBg);
+      ipc.send('renderer:theme-change', storedTheme, themeBg);
     }
   }, [storedTheme, themeVariantLight, themeVariantDark]);
 

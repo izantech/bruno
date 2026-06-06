@@ -6,6 +6,8 @@ import { useTheme } from 'providers/Theme';
 import StyledWrapper from './StyledWrapper';
 import SessionList from './SessionList';
 import '@xterm/xterm/css/xterm.css';
+import { isElectron } from 'utils/common/platform';
+import ipc from 'utils/common/ipc';
 
 // Build xterm.js theme from app theme
 const getTerminalTheme = (theme) => {
@@ -36,7 +38,7 @@ const getTerminalTheme = (theme) => {
 // Terminal instances per session - Map<sessionId, { terminal, fitAddon, inputDisposable, resizeDisposable }>
 const terminalInstances = new Map();
 
-// Data listeners per session - Map<sessionId, { onData, onExit }>
+// Data listeners per session - Map<sessionId, { removeData, removeExit }>
 const sessionListeners = new Map();
 
 // Parking host for terminal DOM when view unmounts
@@ -77,14 +79,14 @@ const createTerminalForSession = (sessionId, terminalTheme) => {
   terminal.loadAddon(fitAddon);
 
   const inputDisposable = terminal.onData((data) => {
-    if (data && sessionId && window.ipcRenderer) {
-      window.ipcRenderer.send('terminal:input', sessionId, data);
+    if (data && sessionId && isElectron()) {
+      ipc.send('terminal:input', sessionId, data);
     }
   });
 
   const resizeDisposable = terminal.onResize(({ cols, rows }) => {
-    if (sessionId && window.ipcRenderer) {
-      window.ipcRenderer.send('terminal:resize', sessionId, { cols, rows });
+    if (sessionId && isElectron()) {
+      ipc.send('terminal:resize', sessionId, { cols, rows });
     }
   });
 
@@ -98,13 +100,13 @@ const createTerminalForSession = (sessionId, terminalTheme) => {
   terminalInstances.set(sessionId, instance);
 
   // Setup IPC listeners for this session
-  if (window.ipcRenderer && !sessionListeners.has(sessionId)) {
+  if (isElectron() && !sessionListeners.has(sessionId)) {
     const onData = (data) => {
       if (!data) return;
-      const instance = terminalInstances.get(sessionId);
-      if (instance && instance.terminal) {
+      const inst = terminalInstances.get(sessionId);
+      if (inst && inst.terminal) {
         try {
-          instance.terminal.write(data);
+          inst.terminal.write(data);
         } catch (err) {
           console.warn('Failed to write terminal data:', err);
         }
@@ -113,10 +115,10 @@ const createTerminalForSession = (sessionId, terminalTheme) => {
 
     const onExit = ({ exitCode, signal } = {}) => {
       const msg = `\r\n[Process exited with code ${exitCode ?? ''} ${signal ? `(signal ${signal})` : ''}]\r\n`;
-      const instance = terminalInstances.get(sessionId);
-      if (instance && instance.terminal) {
+      const inst = terminalInstances.get(sessionId);
+      if (inst && inst.terminal) {
         try {
-          instance.terminal.write(msg);
+          inst.terminal.write(msg);
         } catch (err) {
           console.warn('Failed to write terminal exit message:', err);
         }
@@ -125,10 +127,10 @@ const createTerminalForSession = (sessionId, terminalTheme) => {
       cleanupTerminalInstance(sessionId);
     };
 
-    window.ipcRenderer.on(`terminal:data:${sessionId}`, onData);
-    window.ipcRenderer.on(`terminal:exit:${sessionId}`, onExit);
+    const removeData = ipc.on(`terminal:data:${sessionId}`, onData);
+    const removeExit = ipc.on(`terminal:exit:${sessionId}`, onExit);
 
-    sessionListeners.set(sessionId, { onData, onExit });
+    sessionListeners.set(sessionId, { removeData, removeExit });
   }
 
   return instance;
@@ -151,10 +153,10 @@ const cleanupTerminalInstance = (sessionId) => {
 
   // Remove IPC listeners
   const listeners = sessionListeners.get(sessionId);
-  if (listeners && window.ipcRenderer) {
+  if (listeners && isElectron()) {
     try {
-      window.ipcRenderer.removeAllListeners(`terminal:data:${sessionId}`);
-      window.ipcRenderer.removeAllListeners(`terminal:exit:${sessionId}`);
+      listeners.removeData();
+      listeners.removeExit();
     } catch (err) {
       console.warn('Error removing IPC listeners:', err);
     }
@@ -182,8 +184,8 @@ const openTerminalIntoContainer = async (container, sessionId, terminalTheme) =>
     fitAddon.fit();
     terminal.focus();
     const { cols, rows } = terminal;
-    if (cols && rows && window.ipcRenderer) {
-      window.ipcRenderer.send('terminal:resize', sessionId, { cols, rows });
+    if (cols && rows && isElectron()) {
+      ipc.send('terminal:resize', sessionId, { cols, rows });
     }
   } catch (e) {
     console.warn('Error fitting terminal:', e);
@@ -223,10 +225,10 @@ const TerminalTab = () => {
 
   // Load sessions list
   const loadSessions = useCallback(async (currentActiveSessionId = null) => {
-    if (!window.ipcRenderer) return [];
+    if (!isElectron()) return [];
 
     try {
-      const sessionList = await window.ipcRenderer.invoke('terminal:list-sessions');
+      const sessionList = await ipc.invoke('terminal:list-sessions');
       setSessions(sessionList);
 
       // Use functional state updates to get the current activeSessionId
@@ -257,11 +259,11 @@ const TerminalTab = () => {
   // Create new terminal session
   const createNewSession = useCallback(
     async (cwd = null) => {
-      if (!window.ipcRenderer) return null;
+      if (!isElectron()) return null;
 
       try {
         const options = cwd ? { cwd } : {};
-        const newSessionId = await window.ipcRenderer.invoke('terminal:create', options);
+        const newSessionId = await ipc.invoke('terminal:create', options);
         if (newSessionId) {
           await loadSessions(newSessionId);
           setActiveSessionId(newSessionId);
@@ -290,7 +292,7 @@ const TerminalTab = () => {
       const normalizedCwd = normalizePath(cwd);
 
       // Check if session already exists at this CWD
-      const sessionList = await window.ipcRenderer.invoke('terminal:list-sessions');
+      const sessionList = await ipc.invoke('terminal:list-sessions');
       const existingSession = sessionList.find((s) => normalizePath(s.cwd) === normalizedCwd);
 
       if (existingSession) {
@@ -312,10 +314,10 @@ const TerminalTab = () => {
 
   // Close terminal session
   const closeSession = async (sessionId) => {
-    if (!window.ipcRenderer) return;
+    if (!isElectron()) return;
 
     try {
-      window.ipcRenderer.send('terminal:kill', sessionId);
+      ipc.send('terminal:kill', sessionId);
       cleanupTerminalInstance(sessionId);
 
       // Load updated sessions (this will also handle active session switching)
@@ -332,7 +334,7 @@ const TerminalTab = () => {
 
   // Load sessions on mount and set up polling
   useEffect(() => {
-    if (!window.ipcRenderer) {
+    if (!isElectron()) {
       setIsLoading(false);
       return;
     }
@@ -386,8 +388,8 @@ const TerminalTab = () => {
         if (instance) {
           try {
             const { cols, rows } = instance.terminal;
-            if (cols && rows && window.ipcRenderer) {
-              window.ipcRenderer.send('terminal:resize', activeSessionId, { cols, rows });
+            if (cols && rows && isElectron()) {
+              ipc.send('terminal:resize', activeSessionId, { cols, rows });
             }
           } catch (err) {
             console.warn('Failed to perform initial resize:', err);
@@ -463,7 +465,7 @@ const TerminalTab = () => {
 
         {/* Right Terminal Display */}
         <div className="terminal-display-container">
-          {!activeSessionId && window.ipcRenderer && (
+          {!activeSessionId && isElectron() && (
             <div className="terminal-loading">
               <IconTerminal2 size={24} strokeWidth={1.5} />
               <span>No terminal session selected</span>
