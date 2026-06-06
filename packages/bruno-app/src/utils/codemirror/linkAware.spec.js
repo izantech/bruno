@@ -14,15 +14,20 @@ jest.mock('linkify-it', () => {
 jest.mock('utils/common/platform', () => ({
   isMacOS: jest.fn()
 }));
+
+const mockOpenExternal = jest.fn();
+jest.mock('utils/common/ipc', () => ({
+  __esModule: true,
+  default: {
+    openExternal: (...args) => mockOpenExternal(...args)
+  }
+}));
+
 // Mock requestAnimationFrame
 global.requestAnimationFrame = jest.fn((cb) => cb());
 
-// Mock window.ipcRenderer
 global.window = {
   ...global.window,
-  ipcRenderer: {
-    openExternal: jest.fn()
-  },
   addEventListener: jest.fn(),
   removeEventListener: jest.fn()
 };
@@ -95,13 +100,10 @@ describe('setupLinkAware', () => {
 
     LinkifyIt.mockImplementation(() => mockLinkify);
 
-    // Mock window and ipcRenderer
+    // Mock window
     global.window = {
       addEventListener: jest.fn(),
-      removeEventListener: jest.fn(),
-      ipcRenderer: {
-        openExternal: jest.fn()
-      }
+      removeEventListener: jest.fn()
     };
   });
 
@@ -230,7 +232,7 @@ describe('setupLinkAware', () => {
 
       expect(mockEvent.preventDefault).toHaveBeenCalled();
       expect(mockEvent.stopPropagation).toHaveBeenCalled();
-      expect(global.window.ipcRenderer.openExternal).toHaveBeenCalledWith('https://example.com');
+      expect(mockOpenExternal).toHaveBeenCalledWith('https://example.com');
     });
 
     it('should not open URL when clicking without modifier key', () => {
@@ -248,7 +250,7 @@ describe('setupLinkAware', () => {
 
       clickHandler(mockEvent);
 
-      expect(global.window.ipcRenderer.openExternal).not.toHaveBeenCalled();
+      expect(mockOpenExternal).not.toHaveBeenCalled();
     });
 
     it('should not open URL when clicking on non-link element', () => {
@@ -265,7 +267,7 @@ describe('setupLinkAware', () => {
 
       clickHandler(mockEvent);
 
-      expect(global.window.ipcRenderer.openExternal).not.toHaveBeenCalled();
+      expect(mockOpenExternal).not.toHaveBeenCalled();
     });
 
     it('should not open URL when data-url attribute is missing', () => {
@@ -287,7 +289,7 @@ describe('setupLinkAware', () => {
 
       expect(mockEvent.preventDefault).toHaveBeenCalled();
       expect(mockEvent.stopPropagation).toHaveBeenCalled();
-      expect(global.window.ipcRenderer.openExternal).not.toHaveBeenCalled();
+      expect(mockOpenExternal).not.toHaveBeenCalled();
     });
   });
 

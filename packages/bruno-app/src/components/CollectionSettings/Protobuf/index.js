@@ -13,6 +13,7 @@ import { Tooltip } from 'react-tooltip';
 import useProtoFileManagement from '../../../hooks/useProtoFileManagement';
 import { saveCollectionSettings } from 'providers/ReduxStore/slices/collections/actions';
 import Button from 'ui/Button';
+import ipc from 'utils/common/ipc';
 
 const ProtobufSettings = ({ collection }) => {
   const dispatch = useDispatch();
@@ -38,7 +39,7 @@ const ProtobufSettings = ({ collection }) => {
     const files = event?.files;
     if (files && files.length > 0) {
       for (let i = 0; i < files.length; i++) {
-        const filePath = window?.ipcRenderer?.getFilePath(files[i]);
+        const filePath = await ipc.getFilePath(files[i]);
         if (filePath) {
           await addProtoFileToCollection(filePath);
         }

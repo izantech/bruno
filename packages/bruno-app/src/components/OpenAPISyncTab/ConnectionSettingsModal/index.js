@@ -5,6 +5,7 @@ import Modal from 'components/Modal';
 import { isHttpUrl } from 'utils/url/index';
 import { isOpenApiSpec } from 'utils/importers/openapi-collection';
 import { parseFileAsJsonOrYaml } from 'utils/importers/file-reader';
+import ipc from 'utils/common/ipc';
 
 const ConnectionSettingsModal = ({ collection, sourceUrl, onSave, onDisconnect, onClose }) => {
   const openApiSyncConfig = collection?.brunoConfig?.openapi?.[0];
@@ -88,7 +89,7 @@ const ConnectionSettingsModal = ({ collection, sourceUrl, onSave, onDisconnect, 
                           toast.error('The selected file is not a valid OpenAPI 3.x specification');
                           return;
                         }
-                        const path = window.ipcRenderer.getFilePath(file);
+                        const path = await ipc.getFilePath(file);
                         if (path) setFilePath(path);
                       } catch (err) {
                         toast.error(err.message || 'Failed to read the selected file');

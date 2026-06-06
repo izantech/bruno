@@ -9,6 +9,7 @@ import { isWSDLCollection } from 'utils/importers/wsdl-collection';
 import { isBrunoCollection } from 'utils/importers/bruno-collection';
 import { isOpenCollection } from 'utils/importers/opencollection';
 import { useTheme } from 'providers/Theme';
+import ipc from 'utils/common/ipc';
 
 const convertFileToObject = async (file) => {
   const text = await file.text();
@@ -75,8 +76,8 @@ const FileTab = ({
   const processZipFile = async (zipFile) => {
     setIsLoading(true);
     try {
-      const filePath = window.ipcRenderer.getFilePath(zipFile);
-      const isBrunoZip = await window.ipcRenderer.invoke('renderer:is-bruno-collection-zip', filePath);
+      const filePath = await ipc.getFilePath(zipFile);
+      const isBrunoZip = await ipc.invoke('renderer:is-bruno-collection-zip', filePath);
 
       if (isBrunoZip) {
         const collectionName = zipFile.name.replace(/\.zip$/i, '');
@@ -167,7 +168,7 @@ const FileTab = ({
       }
 
       if (type === 'openapi') {
-        const filePath = window.ipcRenderer.getFilePath(file);
+        const filePath = await ipc.getFilePath(file);
         const rawContent = await file.text();
         await handleSubmit({ rawData: data, type, filePath, rawContent });
       } else {

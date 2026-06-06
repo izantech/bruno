@@ -85,7 +85,7 @@ const ConnectSpecForm = ({ sourceUrl, setSourceUrl, isLoading, error, setError, 
                       setError('Swagger 2.0 is not supported. Please convert your spec to OpenAPI 3.x.');
                       return;
                     }
-                    const filePath = window.ipcRenderer.getFilePath(file);
+                    const filePath = await ipc.getFilePath(file);
                     if (filePath) setSourceUrl(filePath);
                   } catch (err) {
                     setError(err.message || 'Failed to read the selected file');
