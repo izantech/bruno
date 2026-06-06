@@ -1,6 +1,7 @@
 import toast from 'react-hot-toast';
 import { createSlice } from '@reduxjs/toolkit';
 import { getAppInstallDate } from 'utils/common/platform';
+import ipc from 'utils/common/ipc';
 import semver from 'semver';
 const getReadNotificationIds = () => {
   try {
@@ -108,9 +109,8 @@ export const { setNotifications, setFetchingStatus, markNotificationAsRead, mark
 
 export const fetchNotifications = ({ currentVersion }) => (dispatch, getState) => {
   return new Promise((resolve) => {
-    const { ipcRenderer } = window;
     dispatch(setFetchingStatus(true));
-    ipcRenderer
+    ipc
       .invoke('renderer:fetch-notifications')
       .then((notifications) => {
         notifications = filterNotificationsByVersion(notifications, currentVersion);

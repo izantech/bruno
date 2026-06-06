@@ -1,5 +1,6 @@
 import { createSlice } from '@reduxjs/toolkit';
 import { normalizePath } from 'utils/common/path';
+import ipc from 'utils/common/ipc';
 
 const initialState = {
   // Map of collectionUid -> { hasUpdates, lastChecked, error }
@@ -167,9 +168,8 @@ export const checkCollectionForUpdates = (collection) => async (dispatch) => {
   }
 
   try {
-    const { ipcRenderer } = window;
     const syncConfig = collection.brunoConfig.openapi[0];
-    const result = await ipcRenderer.invoke('renderer:check-openapi-updates', {
+    const result = await ipc.invoke('renderer:check-openapi-updates', {
       collectionUid: collection.uid,
       collectionPath: collection.pathname,
       sourceUrl: syncConfig.sourceUrl,

@@ -4,6 +4,7 @@ import brunoClipboard from 'utils/bruno-clipboard';
 import { normalizePath } from 'utils/common/path';
 import { addTab, focusTab } from './tabs';
 import { clearPersistedScope } from 'hooks/usePersistedState/PersistedScopeProvider';
+import ipc from 'utils/common/ipc';
 
 const initialState = {
   isDragging: false,
@@ -287,9 +288,7 @@ export const {
 
 export const savePreferences = (preferences) => (dispatch, getState) => {
   return new Promise((resolve, reject) => {
-    const { ipcRenderer } = window;
-
-    ipcRenderer
+    ipc
       .invoke('renderer:save-preferences', preferences)
       .then(() => dispatch(updatePreferences(preferences)))
       .then(resolve)
@@ -299,55 +298,44 @@ export const savePreferences = (preferences) => (dispatch, getState) => {
 
 export const deleteCookiesForDomain = (domain) => (dispatch, getState) => {
   return new Promise((resolve, reject) => {
-    const { ipcRenderer } = window;
-
-    ipcRenderer.invoke('renderer:delete-cookies-for-domain', domain).then(resolve).catch(reject);
+    ipc.invoke('renderer:delete-cookies-for-domain', domain).then(resolve).catch(reject);
   });
 };
 
 export const deleteCookie = (domain, path, cookieKey) => (dispatch, getState) => {
   return new Promise((resolve, reject) => {
-    const { ipcRenderer } = window;
-
-    ipcRenderer.invoke('renderer:delete-cookie', domain, path, cookieKey).then(resolve).catch(reject);
+    ipc.invoke('renderer:delete-cookie', domain, path, cookieKey).then(resolve).catch(reject);
   });
 };
 
 export const addCookie = (domain, cookie) => (dispatch, getState) => {
   return new Promise((resolve, reject) => {
-    const { ipcRenderer } = window;
-
-    ipcRenderer.invoke('renderer:add-cookie', domain, cookie).then(resolve).catch(reject);
+    ipc.invoke('renderer:add-cookie', domain, cookie).then(resolve).catch(reject);
   });
 };
 
 export const modifyCookie = (domain, oldCookie, cookie) => (dispatch, getState) => {
   return new Promise((resolve, reject) => {
-    const { ipcRenderer } = window;
-
-    ipcRenderer.invoke('renderer:modify-cookie', domain, oldCookie, cookie).then(resolve).catch(reject);
+    ipc.invoke('renderer:modify-cookie', domain, oldCookie, cookie).then(resolve).catch(reject);
   });
 };
 
 export const getParsedCookie = (cookieStr) => () => {
   return new Promise((resolve, reject) => {
-    const { ipcRenderer } = window;
-    ipcRenderer.invoke('renderer:get-parsed-cookie', cookieStr).then(resolve).catch(reject);
+    ipc.invoke('renderer:get-parsed-cookie', cookieStr).then(resolve).catch(reject);
   });
 };
 
 export const createCookieString = (cookieObj) => () => {
   return new Promise((resolve, reject) => {
-    const { ipcRenderer } = window;
-    ipcRenderer.invoke('renderer:create-cookie-string', cookieObj).then(resolve).catch(reject);
+    ipc.invoke('renderer:create-cookie-string', cookieObj).then(resolve).catch(reject);
   });
 };
 
 export const completeQuitFlow = () => (dispatch, getState) => {
-  const { ipcRenderer } = window;
   // Wipe all `persisted::*` keys from localStorage before quitting
   clearPersistedScope();
-  return ipcRenderer.invoke('main:complete-quit-flow');
+  return ipc.invoke('main:complete-quit-flow');
 };
 
 export const copyRequest = (item) => (dispatch, getState) => {
@@ -358,8 +346,7 @@ export const copyRequest = (item) => (dispatch, getState) => {
 
 export const getSystemProxyVariables = () => (dispatch, getState) => {
   return new Promise((resolve, reject) => {
-    const { ipcRenderer } = window;
-    ipcRenderer.invoke('renderer:get-system-proxy-variables')
+    ipc.invoke('renderer:get-system-proxy-variables')
       .then((variables) => {
         dispatch(updateSystemProxyVariables(variables));
         return variables;
@@ -370,8 +357,7 @@ export const getSystemProxyVariables = () => (dispatch, getState) => {
 
 export const refreshSystemProxy = () => (dispatch, getState) => {
   return new Promise((resolve, reject) => {
-    const { ipcRenderer } = window;
-    ipcRenderer.invoke('renderer:refresh-system-proxy')
+    ipc.invoke('renderer:refresh-system-proxy')
       .then((variables) => {
         dispatch(updateSystemProxyVariables(variables));
         return variables;
@@ -382,15 +368,13 @@ export const refreshSystemProxy = () => (dispatch, getState) => {
 
 export const clearHttpHttpsAgentCache = () => () => {
   return new Promise((resolve, reject) => {
-    const { ipcRenderer } = window;
-    ipcRenderer.invoke('renderer:clear-http-https-agent-cache').then(resolve).catch(reject);
+    ipc.invoke('renderer:clear-http-https-agent-cache').then(resolve).catch(reject);
   });
 };
 
 export const refreshPacCache = () => () => {
   return new Promise((resolve, reject) => {
-    const { ipcRenderer } = window;
-    ipcRenderer.invoke('renderer:refresh-pac-cache').then(resolve).catch(reject);
+    ipc.invoke('renderer:refresh-pac-cache').then(resolve).catch(reject);
   });
 };
 

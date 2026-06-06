@@ -2,6 +2,7 @@ import { createSlice } from '@reduxjs/toolkit';
 import { uuid } from 'utils/common/index';
 import { environmentSchema } from '@usebruno/schema';
 import { cloneDeep, has } from 'lodash';
+import ipc from 'utils/common/ipc';
 
 const initialState = {
   globalEnvironments: [],
@@ -115,13 +116,12 @@ export const addGlobalEnvironment = ({ name, variables = [], color }) => (dispat
   return new Promise((resolve, reject) => {
     const uid = uuid();
     const environment = { name, uid, variables };
-    const { ipcRenderer } = window;
     const state = getState();
     const { workspaceUid, workspacePath } = getWorkspaceContext(state);
 
     environmentSchema
       .validate(environment)
-      .then(() => ipcRenderer.invoke('renderer:create-global-environment', { name, uid, variables, color, workspaceUid, workspacePath }))
+      .then(() => ipc.invoke('renderer:create-global-environment', { name, uid, variables, color, workspaceUid, workspacePath }))
       .then((result) => {
         const finalUid = result?.uid || uid;
         const finalName = result?.name || name;
@@ -147,11 +147,10 @@ export const copyGlobalEnvironment = ({ name, environmentUid: baseEnvUid }) => (
     }
     const uid = uuid();
     const environment = { uid, name, variables: baseEnv.variables };
-    const { ipcRenderer } = window;
 
     environmentSchema
       .validate(environment)
-      .then(() => ipcRenderer.invoke('renderer:create-global-environment', { uid, name, variables: baseEnv.variables, workspaceUid, workspacePath }))
+      .then(() => ipc.invoke('renderer:create-global-environment', { uid, name, variables: baseEnv.variables, workspaceUid, workspacePath }))
       .then((result) => {
         const finalUid = result?.uid || uid;
         const finalName = result?.name || name;
@@ -165,7 +164,6 @@ export const copyGlobalEnvironment = ({ name, environmentUid: baseEnvUid }) => (
 
 export const renameGlobalEnvironment = ({ name: newName, environmentUid }) => (dispatch, getState) => {
   return new Promise((resolve, reject) => {
-    const { ipcRenderer } = window;
     const state = getState();
     const { workspaceUid, workspacePath } = getWorkspaceContext(state);
     const globalEnvironments = state.globalEnvironments.globalEnvironments;
@@ -175,11 +173,11 @@ export const renameGlobalEnvironment = ({ name: newName, environmentUid }) => (d
     }
     environmentSchema
       .validate(environment)
-      .then(() => ipcRenderer.invoke('renderer:rename-global-environment', { name: newName, environmentUid, workspaceUid, workspacePath }))
+      .then(() => ipc.invoke('renderer:rename-global-environment', { name: newName, environmentUid, workspaceUid, workspacePath }))
       .then((result) => {
         const resolvedUid = result?.uid || environmentUid;
         dispatch(_renameGlobalEnvironment({ name: newName, environmentUid: resolvedUid }));
-        return ipcRenderer
+        return ipc
           .invoke('renderer:get-global-environments', { workspaceUid, workspacePath })
           .then((data) => {
             dispatch(updateGlobalEnvironments(data));
@@ -219,11 +217,10 @@ export const saveGlobalEnvironment = ({ variables, environmentUid }) => (dispatc
     }
 
     const environmentToSave = { ...environment, variables };
-    const { ipcRenderer } = window;
 
     environmentSchema
       .validate(environmentToSave)
-      .then(() => ipcRenderer.invoke('renderer:save-global-environment', {
+      .then(() => ipc.invoke('renderer:save-global-environment', {
         environmentUid,
         variables,
         color: environment.color,
@@ -238,11 +235,10 @@ export const saveGlobalEnvironment = ({ variables, environmentUid }) => (dispatc
 
 export const selectGlobalEnvironment = ({ environmentUid }) => (dispatch, getState) => {
   return new Promise((resolve, reject) => {
-    const { ipcRenderer } = window;
     const state = getState();
     const { workspaceUid, workspacePath } = getWorkspaceContext(state);
 
-    ipcRenderer
+    ipc
       .invoke('renderer:select-global-environment', { environmentUid, workspaceUid, workspacePath })
       .then(() => dispatch(_selectGlobalEnvironment({ environmentUid })))
       .then(resolve)
@@ -252,11 +248,10 @@ export const selectGlobalEnvironment = ({ environmentUid }) => (dispatch, getSta
 
 export const deleteGlobalEnvironment = ({ environmentUid }) => (dispatch, getState) => {
   return new Promise((resolve, reject) => {
-    const { ipcRenderer } = window;
     const state = getState();
     const { workspaceUid, workspacePath } = getWorkspaceContext(state);
 
-    ipcRenderer
+    ipc
       .invoke('renderer:delete-global-environment', { environmentUid, workspaceUid, workspacePath })
       .then(() => dispatch(_deleteGlobalEnvironment({ environmentUid })))
       .then(resolve)
@@ -266,7 +261,6 @@ export const deleteGlobalEnvironment = ({ environmentUid }) => (dispatch, getSta
 
 export const globalEnvironmentsUpdateEvent = ({ globalEnvironmentVariables }) => (dispatch, getState) => {
   return new Promise((resolve, reject) => {
-    const { ipcRenderer } = window;
     if (!globalEnvironmentVariables) resolve();
 
     const state = getState();
@@ -308,7 +302,7 @@ export const globalEnvironmentsUpdateEvent = ({ globalEnvironmentVariables }) =>
 
     environmentSchema
       .validate(environmentToSave)
-      .then(() => ipcRenderer.invoke('renderer:save-global-environment', {
+      .then(() => ipc.invoke('renderer:save-global-environment', {
         environmentUid,
         variables,
         color: environment.color,
@@ -323,10 +317,9 @@ export const globalEnvironmentsUpdateEvent = ({ globalEnvironmentVariables }) =>
 
 export const updateGlobalEnvironmentColor = (environmentUid, color) => (dispatch, getState) => {
   return new Promise((resolve, reject) => {
-    const { ipcRenderer } = window;
     const state = getState();
     const { workspaceUid, workspacePath } = getWorkspaceContext(state);
-    ipcRenderer.invoke('renderer:update-global-environment-color', { environmentUid, color, workspaceUid, workspacePath })
+    ipc.invoke('renderer:update-global-environment-color', { environmentUid, color, workspaceUid, workspacePath })
       .then(() => dispatch(_updateGlobalEnvironmentColor({ environmentUid, color })))
       .then(resolve)
       .catch(reject);

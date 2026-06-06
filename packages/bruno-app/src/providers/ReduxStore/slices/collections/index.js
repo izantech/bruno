@@ -1,4 +1,6 @@
 import { parseQueryParams, buildQueryString as stringifyQueryParams } from '@usebruno/common/utils';
+import ipc from 'utils/common/ipc';
+import { isElectron } from 'utils/common/platform';
 import { uuid } from 'utils/common';
 import { find, map, forOwn, concat, filter, each, cloneDeep, get, set, findIndex } from 'lodash';
 import { createSlice } from '@reduxjs/toolkit';
@@ -2934,15 +2936,14 @@ export const collectionsSlice = createSlice({
             if (lastAction.payload === environment.name) {
               collection.activeEnvironmentUid = environment.uid;
               // Persist the selection to the UI state snapshot
-              const { ipcRenderer } = window;
-              if (ipcRenderer) {
+              if (isElectron()) {
                 const extension = collection?.brunoConfig?.version === '1' ? 'bru' : 'yml';
                 const environmentPath = environment?.pathname
                   || (environment?.name && collection?.pathname
                     ? path.join(collection.pathname, 'environments', `${environment.name}.${extension}`)
                     : null);
 
-                ipcRenderer.invoke('renderer:update-ui-state-snapshot', {
+                ipc.invoke('renderer:update-ui-state-snapshot', {
                   type: 'COLLECTION_ENVIRONMENT',
                   data: {
                     collectionPath: collection?.pathname,

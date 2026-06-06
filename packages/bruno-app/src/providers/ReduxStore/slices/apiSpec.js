@@ -1,6 +1,7 @@
 import { createSlice } from '@reduxjs/toolkit';
 import { find } from 'lodash';
 import toast from 'react-hot-toast';
+import ipc from 'utils/common/ipc';
 
 const initialState = {
   apiSpecs: [],
@@ -87,15 +88,13 @@ const findApiSpecByUid = (apiSpecs, uid) => {
 
 export const openApiSpec = (workspacePath = null) => (dispatch, getState) => {
   return new Promise((resolve, reject) => {
-    const { ipcRenderer } = window;
-
     if (!workspacePath) {
       const state = getState();
       const activeWorkspace = state.workspaces.workspaces.find((w) => w.uid === state.workspaces.activeWorkspaceUid);
       workspacePath = activeWorkspace?.pathname || null;
     }
 
-    ipcRenderer.invoke('renderer:open-api-spec', workspacePath).then(resolve).catch(reject);
+    ipc.invoke('renderer:open-api-spec', workspacePath).then(resolve).catch(reject);
   });
 };
 
@@ -103,11 +102,10 @@ export const saveApiSpecToFile
   = ({ uid, content }) =>
     (dispatch, getState) => {
       return new Promise((resolve, reject) => {
-        const { ipcRenderer } = window;
         const state = getState();
         const apiSpec = findApiSpecByUid(state.apiSpec.apiSpecs, uid);
         const { pathname } = apiSpec;
-        ipcRenderer
+        ipc
           .invoke('renderer:save-api-spec', pathname, content)
           .then(() => {
             dispatch(saveApiSpec({ content, uid }));
@@ -122,8 +120,6 @@ export const saveApiSpecToFile
     };
 
 export const createApiSpecFile = (apiSpecName, apiSpecLocation, content, workspacePath = null) => (dispatch, getState) => {
-  const { ipcRenderer } = window;
-
   if (!workspacePath) {
     const state = getState();
     const activeWorkspace = state.workspaces.workspaces.find((w) => w.uid === state.workspaces.activeWorkspaceUid);
@@ -131,7 +127,7 @@ export const createApiSpecFile = (apiSpecName, apiSpecLocation, content, workspa
   }
 
   return new Promise((resolve, reject) => {
-    ipcRenderer.invoke('renderer:create-api-spec', apiSpecName, apiSpecLocation, content, workspacePath).then(resolve).catch(reject);
+    ipc.invoke('renderer:create-api-spec', apiSpecName, apiSpecLocation, content, workspacePath).then(resolve).catch(reject);
   });
 };
 
@@ -145,12 +141,10 @@ export const closeApiSpecFile
           return reject(new Error('API Spec not found'));
         }
         if (apiSpec) {
-          const { ipcRenderer } = window;
-
           const activeWorkspace = state.workspaces.workspaces.find((w) => w.uid === state.workspaces.activeWorkspaceUid);
           const workspacePath = activeWorkspace?.pathname || null;
 
-          ipcRenderer
+          ipc
             .invoke('renderer:remove-api-spec', apiSpec.pathname, workspacePath)
             .then(async () => {
               dispatch(removeApiSpec({ uid }));

@@ -15,8 +15,7 @@ import {
 } from 'utils/snapshot';
 import { normalizePath } from 'utils/common/path';
 import { TAB_IDENFIERS as DEVTOOL_TABS } from 'providers/ReduxStore/slices/logs';
-
-const { ipcRenderer } = window;
+import ipc from 'utils/common/ipc';
 
 // Debounce timer reference
 let saveTimer = null;
@@ -57,7 +56,7 @@ const serializeSnapshot = async (state) => {
   // Get existing snapshot to preserve data for collections not currently loaded
   let existingSnapshot = null;
   try {
-    existingSnapshot = await ipcRenderer.invoke('renderer:snapshot:get');
+    existingSnapshot = await ipc.invoke('renderer:snapshot:get');
   } catch (err) {
     // Ignore - will create fresh snapshot
   }
@@ -269,7 +268,7 @@ const scheduleSave = (getState) => {
       }
 
       const snapshot = await serializeSnapshot(state);
-      await ipcRenderer.invoke('renderer:snapshot:save', snapshot);
+      await ipc.invoke('renderer:snapshot:save', snapshot);
     } catch (err) {
       console.error('Failed to save snapshot:', err);
     }
@@ -281,7 +280,7 @@ const flushSnapshotNow = async (getState) => {
   try {
     const state = getState();
     const snapshot = await serializeSnapshot(state);
-    await ipcRenderer.invoke('renderer:snapshot:save', snapshot);
+    await ipc.invoke('renderer:snapshot:save', snapshot);
   } catch (err) {
     console.error('Failed to flush snapshot:', err);
   }
