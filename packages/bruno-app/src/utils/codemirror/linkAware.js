@@ -1,6 +1,7 @@
 import LinkifyIt from 'linkify-it';
 import { isMacOS } from 'utils/common/platform';
 import { debounce } from 'lodash';
+import ipc from 'utils/common/ipc';
 
 const URL_TERMINATORS = /[\s"<>\\`]/;
 const VALID_URL_CHARS = /^[a-zA-Z0-9\-._~:/?#\[\]@!$&'()*+,;=%]/;
@@ -203,7 +204,7 @@ function handleClick(event, linkClass, isCmdOrCtrlPressed) {
     event.stopPropagation();
     const url = event.target.getAttribute('data-url');
     if (url) {
-      window?.ipcRenderer?.openExternal(url);
+      ipc.openExternal(url);
     }
   }
 }

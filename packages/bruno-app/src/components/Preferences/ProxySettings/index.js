@@ -6,6 +6,7 @@ import toast from 'react-hot-toast';
 import { savePreferences, refreshPacCache } from 'providers/ReduxStore/slices/app';
 
 import StyledWrapper from './StyledWrapper';
+import ipc from 'utils/common/ipc';
 import { useDispatch, useSelector } from 'react-redux';
 import { IconEye, IconEyeOff, IconRefresh } from '@tabler/icons';
 import { useState } from 'react';
@@ -433,8 +434,7 @@ const ProxySettings = ({ close }) => {
                     type="button"
                     className="textbox pac-source-input pac-file-btn"
                     onClick={() => {
-                      window.ipcRenderer
-                        .invoke('renderer:browse-pac-file')
+                      ipc.invoke('renderer:browse-pac-file')
                         .then((fileUrl) => {
                           if (fileUrl) {
                             formik.setFieldValue('pac.source', fileUrl);

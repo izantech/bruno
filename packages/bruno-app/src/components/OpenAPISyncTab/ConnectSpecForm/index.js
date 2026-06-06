@@ -4,6 +4,7 @@ import Button from 'ui/Button';
 import { isHttpUrl } from 'utils/url/index';
 import { isOpenApiSpec } from 'utils/importers/openapi-collection';
 import { parseFileAsJsonOrYaml } from 'utils/importers/file-reader';
+import ipc from 'utils/common/ipc';
 
 const FEATURES = [
   'Detect new, modified, and removed endpoints',
@@ -134,7 +135,7 @@ const ConnectSpecForm = ({ sourceUrl, setSourceUrl, isLoading, error, setError, 
         <button
           type="button"
           className="beta-feedback-link"
-          onClick={() => window?.ipcRenderer?.openExternal('https://github.com/usebruno/bruno/discussions/7401')}
+          onClick={() => ipc.openExternal('https://github.com/usebruno/bruno/discussions/7401')}
         >
           Share feedback
         </button>

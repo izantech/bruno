@@ -15,6 +15,7 @@ import ActionIcon from 'ui/ActionIcon/index';
 import MenuDropdown from 'ui/MenuDropdown';
 import Help from 'components/Help';
 import { isHttpUrl } from 'utils/url/index';
+import ipc from 'utils/common/ipc';
 
 const OpenAPISyncHeader = ({
   collection, spec, sourceUrl, syncStatus, onViewSpec,
@@ -28,7 +29,7 @@ const OpenAPISyncHeader = ({
   const [displayPath, setDisplayPath] = useState(sourceUrl);
   useEffect(() => {
     if (sourceIsLocal && sourceUrl) {
-      window.ipcRenderer.invoke('renderer:resolve-path', sourceUrl, collection.pathname)
+      ipc.invoke('renderer:resolve-path', sourceUrl, collection.pathname)
         .then((resolved) => setDisplayPath(resolved))
         .catch(() => setDisplayPath(sourceUrl));
     } else {
@@ -43,7 +44,7 @@ const OpenAPISyncHeader = ({
     if (!sourceUrl) return;
     try {
       if (sourceIsLocal) {
-        const absolutePath = await window.ipcRenderer.invoke('renderer:resolve-path', sourceUrl, collection.pathname);
+        const absolutePath = await ipc.invoke('renderer:resolve-path', sourceUrl, collection.pathname);
         await navigator.clipboard.writeText(absolutePath);
       } else {
         await navigator.clipboard.writeText(sourceUrl);
@@ -58,8 +59,8 @@ const OpenAPISyncHeader = ({
   const revealInFolder = async () => {
     if (!sourceUrl) return;
     try {
-      const absolutePath = await window.ipcRenderer.invoke('renderer:resolve-path', sourceUrl, collection.pathname);
-      await window.ipcRenderer.invoke('renderer:show-in-folder', absolutePath);
+      const absolutePath = await ipc.invoke('renderer:resolve-path', sourceUrl, collection.pathname);
+      await ipc.invoke('renderer:show-in-folder', absolutePath);
     } catch (err) {
       console.error('Error revealing in folder:', err);
       toast.error('Failed to open in file manager');

@@ -4,6 +4,7 @@ import { AppProvider } from 'providers/App';
 import { ToastProvider } from 'providers/Toaster';
 import { HotkeysProvider } from 'providers/Hotkeys';
 import { PromptVariablesProvider } from 'providers/PromptVariables';
+import { isElectron, isCapacitor } from 'utils/common/platform';
 
 import ReduxStore from 'providers/ReduxStore';
 import ThemeProvider from 'providers/Theme/index';
@@ -27,7 +28,7 @@ import { setupPolyfills } from 'utils/common/setupPolyfills';
 setupPolyfills();
 
 function Main({ children }) {
-  if (!window.ipcRenderer) {
+  if (!isElectron() && !isCapacitor()) {
     return (
       <div class="bg-red-100 border border-red-400 text-red-700 px-4 py-3 mx-10 my-10 rounded relative" role="alert">
         <strong class="font-bold">ERROR:</strong>

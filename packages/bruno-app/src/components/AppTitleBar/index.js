@@ -12,6 +12,7 @@ import { focusTab } from 'providers/ReduxStore/slices/tabs';
 import get from 'lodash/get';
 
 import Bruno from 'components/Bruno';
+import ipc from 'utils/common/ipc';
 import MenuDropdown from 'ui/MenuDropdown';
 import ActionIcon from 'ui/ActionIcon';
 import IconSidebarToggle from 'components/Icons/IconSidebarToggle';
@@ -102,16 +103,16 @@ const AppTitleBar = () => {
   }, [showWindowControls]);
 
   const handleMinimize = useCallback(() => {
-    window.ipcRenderer?.send('renderer:window-minimize');
+    ipc.send('renderer:window-minimize');
   }, []);
 
   const handleMaximize = useCallback(() => {
-    window.ipcRenderer?.send('renderer:window-maximize');
+    ipc.send('renderer:window-maximize');
     // State will be updated via IPC events from main process (main:window-maximized/main:window-unmaximized)
   }, []);
 
   const handleClose = useCallback(() => {
-    window.ipcRenderer?.send('renderer:window-close');
+    ipc.send('renderer:window-close');
   }, []);
 
   // Get workspace info

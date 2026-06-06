@@ -13,6 +13,7 @@ import { openConsole } from 'providers/ReduxStore/slices/logs';
 import { addTab } from 'providers/ReduxStore/slices/tabs';
 import { useApp } from 'providers/App';
 import StyledWrapper from './StyledWrapper';
+import ipc from 'utils/common/ipc';
 
 const StatusBar = () => {
   const dispatch = useDispatch();
@@ -108,7 +109,7 @@ const StatusBar = () => {
               <button
                 className="status-bar-button"
                 onClick={() => {
-                  window?.ipcRenderer?.openExternal('https://github.com/usebruno/bruno');
+                  ipc.openExternal('https://github.com/usebruno/bruno');
                 }}
                 tabIndex={0}
                 aria-label="Open GitHub Repository"

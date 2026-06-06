@@ -13,6 +13,7 @@ import ConnectionSettingsModal from './ConnectionSettingsModal';
 import DisconnectSyncModal from './DisconnectSyncModal';
 import OverviewSection from './OverviewSection';
 import useOpenAPISync from './hooks/useOpenAPISync';
+import ipc from 'utils/common/ipc';
 
 const OpenAPISyncTab = ({ collection }) => {
   const {
@@ -136,7 +137,7 @@ const OpenAPISyncTab = ({ collection }) => {
                   <button
                     type="button"
                     className="beta-feedback-link"
-                    onClick={() => window?.ipcRenderer?.openExternal('https://github.com/usebruno/bruno/discussions/7401')}
+                    onClick={() => ipc.openExternal('https://github.com/usebruno/bruno/discussions/7401')}
                   >
                     Share feedback
                   </button>
