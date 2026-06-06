@@ -13,6 +13,8 @@ import { saveMultipleRequests, saveMultipleCollections, saveMultipleFolders, sav
 import { toggleSidebarCollapse, savePreferences } from 'providers/ReduxStore/slices/app';
 import { openDevtoolsAndSwitchToTerminal } from 'utils/terminal';
 import { getKeyBindingsForActionAllOS } from './keyMappings';
+import ipc from 'utils/common/ipc';
+import { isElectron } from 'utils/common/platform';
 
 export const HotkeysContext = React.createContext();
 
@@ -416,8 +418,7 @@ export const HotkeysProvider = (props) => {
   // Zoom in
   useEffect(() => {
     bindAction('zoomIn', () => {
-      const { ipcRenderer } = window;
-      ipcRenderer?.invoke('renderer:zoom-in');
+      if (isElectron()) ipc.invoke('renderer:zoom-in');
       return false;
     });
 
@@ -429,8 +430,7 @@ export const HotkeysProvider = (props) => {
   // Zoom out
   useEffect(() => {
     bindAction('zoomOut', () => {
-      const { ipcRenderer } = window;
-      ipcRenderer?.invoke('renderer:zoom-out');
+      if (isElectron()) ipc.invoke('renderer:zoom-out');
       return false;
     });
 
@@ -442,8 +442,7 @@ export const HotkeysProvider = (props) => {
   // Reset zoom
   useEffect(() => {
     bindAction('resetZoom', () => {
-      const { ipcRenderer } = window;
-      ipcRenderer?.invoke('renderer:reset-zoom');
+      if (isElectron()) ipc.invoke('renderer:reset-zoom');
       return false;
     });
 

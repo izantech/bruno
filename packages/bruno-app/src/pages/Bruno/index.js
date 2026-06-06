@@ -11,6 +11,7 @@ import TabPanelErrorBoundary from 'components/RequestTabPanel/TabPanelErrorBound
 // import ErrorCapture from 'components/ErrorCapture';
 import { useSelector } from 'react-redux';
 import { isElectron } from 'utils/common/platform';
+import ipc from 'utils/common/ipc';
 import StyledWrapper from './StyledWrapper';
 import 'codemirror/theme/material.css';
 import 'codemirror/theme/monokai.css';
@@ -97,9 +98,7 @@ export default function Main() {
       return;
     }
 
-    const { ipcRenderer } = window;
-
-    const removeAppLoadedListener = ipcRenderer.on('main:app-loaded', (init) => {
+    const removeAppLoadedListener = ipc.on('main:app-loaded', (init) => {
       if (mainSectionRef.current) {
         mainSectionRef.current.setAttribute('data-app-state', 'loaded');
       }
