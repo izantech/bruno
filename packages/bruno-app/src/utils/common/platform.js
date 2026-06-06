@@ -46,6 +46,12 @@ export const getRevealInFolderLabel = () => {
   return 'Reveal in File Manager';
 };
 
+export const isCapacitor = () => {
+  return !!(window && window.Capacitor && typeof window.Capacitor.isNativePlatform === 'function' && window.Capacitor.isNativePlatform());
+};
+
+export const hasNativeHost = () => isElectron() || isCapacitor();
+
 export const getAppInstallDate = () => {
   let dateString = localStorage.getItem('bruno.installedOn');
 
