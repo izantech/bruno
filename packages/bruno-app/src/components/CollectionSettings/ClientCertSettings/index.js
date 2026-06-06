@@ -13,6 +13,7 @@ import { useDispatch } from 'react-redux';
 import { updateCollectionClientCertificates } from 'providers/ReduxStore/slices/collections';
 import { saveCollectionSettings } from 'providers/ReduxStore/slices/collections/actions';
 import get from 'lodash/get';
+import ipc from 'utils/common/ipc';
 import Button from 'ui/Button';
 
 const ClientCertSettings = ({ collection }) => {
@@ -95,8 +96,10 @@ const ClientCertSettings = ({ collection }) => {
   const { isSensitive } = useDetectSensitiveField(collection);
   const { showWarning, warningMessage } = isSensitive(formik.values.passphrase);
 
-  const getFile = (e) => {
-    const filePath = window?.ipcRenderer?.getFilePath(e?.files?.[0]);
+  const getFile = async (e) => {
+    const file = e?.files?.[0];
+    if (!file) return;
+    const filePath = await ipc.getFilePath(file);
     if (filePath) {
       let relativePath = path.relative(collection.pathname, filePath);
       formik.setFieldValue(e.name, relativePath);

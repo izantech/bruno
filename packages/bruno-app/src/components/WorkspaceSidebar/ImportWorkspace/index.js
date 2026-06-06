@@ -11,6 +11,7 @@ import { importWorkspaceAction } from 'providers/ReduxStore/slices/workspaces/ac
 import { formatIpcError } from 'utils/common/error';
 import { multiLineMsg } from 'utils/common/index';
 import Help from 'components/Help';
+import ipc from 'utils/common/ipc';
 
 const ImportWorkspace = ({ onClose }) => {
   const dispatch = useDispatch();
@@ -62,7 +63,7 @@ const ImportWorkspace = ({ onClose }) => {
     }
   };
 
-  const validateAndGetFilePath = (file) => {
+  const validateAndGetFilePath = async (file) => {
     if (!file) return null;
 
     const isZip = file.name.endsWith('.zip') || file.type === 'application/zip' || file.type === 'application/x-zip-compressed';
@@ -71,7 +72,7 @@ const ImportWorkspace = ({ onClose }) => {
       return null;
     }
 
-    const filePath = window?.ipcRenderer?.getFilePath(file);
+    const filePath = await ipc.getFilePath(file);
     if (!filePath) {
       toast.error('Could not get file path');
       return null;
@@ -80,13 +81,13 @@ const ImportWorkspace = ({ onClose }) => {
     return { name: file.name, path: filePath };
   };
 
-  const handleDrop = (e) => {
+  const handleDrop = async (e) => {
     e.preventDefault();
     e.stopPropagation();
     setDragActive(false);
 
     if (e.dataTransfer.files && e.dataTransfer.files[0]) {
-      const fileInfo = validateAndGetFilePath(e.dataTransfer.files[0]);
+      const fileInfo = await validateAndGetFilePath(e.dataTransfer.files[0]);
       if (fileInfo) {
         setSelectedFile(fileInfo);
       }
@@ -97,9 +98,9 @@ const ImportWorkspace = ({ onClose }) => {
     fileInputRef.current.click();
   };
 
-  const handleFileInputChange = (e) => {
+  const handleFileInputChange = async (e) => {
     if (e.target.files && e.target.files[0]) {
-      const fileInfo = validateAndGetFilePath(e.target.files[0]);
+      const fileInfo = await validateAndGetFilePath(e.target.files[0]);
       if (fileInfo) {
         setSelectedFile(fileInfo);
       }

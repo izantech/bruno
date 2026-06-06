@@ -6,6 +6,7 @@ import { useSelector, useDispatch } from 'react-redux';
 import { savePreferences } from 'providers/ReduxStore/slices/app';
 import { browseDirectory } from 'providers/ReduxStore/slices/collections/actions';
 import StyledWrapper from './StyledWrapper';
+import ipc from 'utils/common/ipc';
 import * as Yup from 'yup';
 import toast from 'react-hot-toast';
 import path from 'utils/common/path';
@@ -151,8 +152,10 @@ const General = () => {
     };
   }, [formik.values, formik.dirty, formik.isValid, debouncedSave]);
 
-  const addCaCertificate = (e) => {
-    const filePath = window?.ipcRenderer?.getFilePath(e?.target?.files?.[0]);
+  const addCaCertificate = async (e) => {
+    const file = e?.target?.files?.[0];
+    if (!file) return;
+    const filePath = await ipc.getFilePath(file);
     if (filePath) {
       formik.setFieldValue('customCaCertificate.filePath', filePath);
     }
