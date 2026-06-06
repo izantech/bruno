@@ -1,16 +1,15 @@
 import { buildEnvVariable } from 'utils/environments';
+import ipc from 'utils/common/ipc';
 
 export const exportBrunoEnvironment = async ({ environments, environmentType, filePath, exportFormat = 'folder' }) => {
   try {
-    const { ipcRenderer } = window;
-
     let cleanEnvironments = environments.map((environment) => ({
       name: environment.name,
       variables: (environment.variables || []).map((envVariable) => buildEnvVariable({ envVariable })),
       color: environment.color ?? undefined
     }));
 
-    await ipcRenderer.invoke('renderer:export-environment', {
+    await ipc.invoke('renderer:export-environment', {
       environments: cleanEnvironments,
       environmentType,
       format: 'json',

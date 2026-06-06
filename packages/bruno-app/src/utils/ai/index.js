@@ -1,4 +1,5 @@
-import { callIpc } from 'utils/common/ipc';
+import ipc, { callIpc } from 'utils/common/ipc';
+import { isElectron } from 'utils/common/platform';
 
 /**
  * Renderer-side wrapper around the AI IPC channels.
@@ -30,8 +31,7 @@ export const aiGenerateText = (params) =>
  * that resolves with the final text or rejects on error.
  */
 export const aiStreamText = (params, handlers = {}) => {
-  const { ipcRenderer } = window;
-  if (!ipcRenderer) {
+  if (!isElectron()) {
     return { stop: () => {}, done: Promise.reject(new Error('IPC not available')) };
   }
 
@@ -42,7 +42,7 @@ export const aiStreamText = (params, handlers = {}) => {
     const cleanup = () => subs.forEach((unsub) => unsub());
 
     const onMatch = (channel, handler) => {
-      const unsub = ipcRenderer.on(channel, (payload) => {
+      const unsub = ipc.on(channel, (payload) => {
         if (payload?.streamId !== streamId) return;
         handler(payload);
       });
@@ -69,11 +69,11 @@ export const aiStreamText = (params, handlers = {}) => {
     });
   });
 
-  ipcRenderer.send('renderer:ai-stream-text', { ...params, streamId });
+  ipc.send('renderer:ai-stream-text', { ...params, streamId });
 
   return {
     streamId,
-    stop: () => ipcRenderer.send('renderer:ai-stop-stream', { streamId }),
+    stop: () => ipc.send('renderer:ai-stop-stream', { streamId }),
     done
   };
 };

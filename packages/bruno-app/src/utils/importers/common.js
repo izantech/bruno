@@ -11,6 +11,7 @@ import { BrunoError } from 'utils/common/error';
 import { isOpenApiSpec } from './openapi-collection';
 import { isPostmanCollection } from './postman-collection';
 import { isInsomniaCollection } from './insomnia-collection';
+import ipc from 'utils/common/ipc';
 
 export const validateSchema = async (collections = []) => {
   collections = Array.isArray(collections) ? collections : [collections];
@@ -219,9 +220,8 @@ const getCollectionSpecType = (data) => {
 };
 
 export const fetchAndValidateApiSpecFromUrl = ({ url }) => {
-  const { ipcRenderer } = window;
   return new Promise((resolve, reject) => {
-    ipcRenderer
+    ipc
       .invoke('renderer:fetch-api-spec', url)
       .then(async (res) => {
         const data = await jsyaml.load(res);

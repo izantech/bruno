@@ -1,6 +1,7 @@
 import { findItemInCollection, findItemInCollectionByPathname } from 'utils/collections';
 import path, { normalizePath } from 'utils/common/path';
 import { uuid } from 'utils/common';
+import ipc from 'utils/common/ipc';
 
 const isObject = (value) => value && typeof value === 'object' && !Array.isArray(value);
 
@@ -611,15 +612,13 @@ export const hydrateCollectionTabs = async (
   workspacePathname = null,
   strictWorkspaceScope = false
 ) => {
-  const { ipcRenderer } = window;
-
   const tabsSnapshot = getTabsSnapshotFromLookups(
     collection.pathname,
     snapshotLookups,
     workspacePathname,
     strictWorkspaceScope
   )
-  || await ipcRenderer.invoke('renderer:snapshot:get-tabs', collection.pathname, workspacePathname).catch(() => null);
+  || await ipc.invoke('renderer:snapshot:get-tabs', collection.pathname, workspacePathname).catch(() => null);
 
   const hasPersistedTabs = Array.isArray(tabsSnapshot?.tabs) && tabsSnapshot.tabs.length > 0;
   const hasPersistedActiveTab = Boolean(tabsSnapshot?.activeTab);
@@ -649,10 +648,8 @@ export const hydrateTabs = async (collections, dispatch, restoreTabs, snapshotLo
 };
 
 export const getActiveTabFromSnapshot = async (collectionPathname, collection, snapshotLookups = null, workspacePathname = null) => {
-  const { ipcRenderer } = window;
-
   const tabsSnapshot = getTabsSnapshotFromLookups(collectionPathname, snapshotLookups, workspacePathname)
-    || await ipcRenderer.invoke('renderer:snapshot:get-tabs', collectionPathname, workspacePathname).catch(() => null);
+    || await ipc.invoke('renderer:snapshot:get-tabs', collectionPathname, workspacePathname).catch(() => null);
 
   if (!tabsSnapshot?.activeTab || !tabsSnapshot?.tabs?.length) return null;
 
