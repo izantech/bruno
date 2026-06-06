@@ -5,14 +5,14 @@ import get from 'lodash/get';
 import StyledWrapper from './StyledWrapper';
 import { formatSize } from 'utils/common/index';
 import Button from 'ui/Button/index';
+import ipc from 'utils/common/ipc';
 
 const LargeResponseWarning = ({ item, responseSize, onRevealResponse }) => {
-  const { ipcRenderer } = window;
   const response = item.response || {};
 
   const downloadResponseToFile = () => {
     return new Promise((resolve, reject) => {
-      ipcRenderer
+      ipc
         .invoke('renderer:save-response-to-file', response, item.requestSent.url, item.pathname)
         .then((result) => {
           if (result && result.success) {

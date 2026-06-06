@@ -1,3 +1,5 @@
+import ipc from 'utils/common/ipc';
+
 export const sendNetworkRequest = async (item, collection, environment, runtimeVariables) => {
   return new Promise((resolve, reject) => {
     if (['http-request', 'graphql-request'].includes(item.type)) {
@@ -45,9 +47,7 @@ export const sendGrpcRequest = async (item, collection, environment, runtimeVari
 
 const sendHttpRequest = async (item, collection, environment, runtimeVariables) => {
   return new Promise((resolve, reject) => {
-    const { ipcRenderer } = window;
-
-    ipcRenderer
+    ipc
       .invoke('send-http-request', item, collection, environment, runtimeVariables)
       .then(resolve)
       .catch(reject);
@@ -56,33 +56,27 @@ const sendHttpRequest = async (item, collection, environment, runtimeVariables) 
 
 export const sendCollectionOauth2Request = async (collection, environment, runtimeVariables) => {
   return new Promise((resolve, reject) => {
-    const { ipcRenderer } = window;
     resolve({});
   });
 };
 
 export const fetchGqlSchema = async (endpoint, environment, request, collection) => {
   return new Promise((resolve, reject) => {
-    const { ipcRenderer } = window;
-
-    ipcRenderer.invoke('fetch-gql-schema', endpoint, environment, request, collection).then(resolve).catch(reject);
+    ipc.invoke('fetch-gql-schema', endpoint, environment, request, collection).then(resolve).catch(reject);
   });
 };
 
 export const cancelNetworkRequest = async (cancelTokenUid) => {
   return new Promise((resolve, reject) => {
-    const { ipcRenderer } = window;
-
-    ipcRenderer.invoke('cancel-http-request', cancelTokenUid).then(resolve).catch(reject);
+    ipc.invoke('cancel-http-request', cancelTokenUid).then(resolve).catch(reject);
   });
 };
 
 export const startGrpcRequest = async (item, collection, environment, runtimeVariables) => {
   return new Promise((resolve, reject) => {
-    const { ipcRenderer } = window;
     const request = item.draft ? item.draft : item;
 
-    ipcRenderer.invoke('grpc:start-connection', {
+    ipc.invoke('grpc:start-connection', {
       request,
       collection,
       environment,
@@ -105,8 +99,7 @@ export const startGrpcRequest = async (item, collection, environment, runtimeVar
  */
 export const sendGrpcMessage = async (item, collectionUid, message) => {
   return new Promise((resolve, reject) => {
-    const { ipcRenderer } = window;
-    ipcRenderer.invoke('grpc:send-message', item.uid, collectionUid, message)
+    ipc.invoke('grpc:send-message', item.uid, collectionUid, message)
       .then(resolve)
       .catch(reject);
   });
@@ -119,8 +112,7 @@ export const sendGrpcMessage = async (item, collectionUid, message) => {
  */
 export const cancelGrpcRequest = async (requestId) => {
   return new Promise((resolve, reject) => {
-    const { ipcRenderer } = window;
-    ipcRenderer.invoke('grpc:cancel', requestId)
+    ipc.invoke('grpc:cancel', requestId)
       .then(resolve)
       .catch(reject);
   });
@@ -133,8 +125,7 @@ export const cancelGrpcRequest = async (requestId) => {
  */
 export const endGrpcStream = async (requestId) => {
   return new Promise((resolve, reject) => {
-    const { ipcRenderer } = window;
-    ipcRenderer.invoke('grpc:end', requestId)
+    ipc.invoke('grpc:end', requestId)
       .then(resolve)
       .catch(reject);
   });
@@ -142,23 +133,19 @@ export const endGrpcStream = async (requestId) => {
 
 export const loadGrpcMethodsFromProtoFile = async (filePath, collection = null) => {
   return new Promise((resolve, reject) => {
-    const { ipcRenderer } = window;
-
-    ipcRenderer.invoke('grpc:load-methods-proto', { filePath, collection }).then(resolve).catch(reject);
+    ipc.invoke('grpc:load-methods-proto', { filePath, collection }).then(resolve).catch(reject);
   });
 };
 
 export const cancelGrpcConnection = async (connectionId) => {
   return new Promise((resolve, reject) => {
-    const { ipcRenderer } = window;
-    ipcRenderer.invoke('grpc:cancel-request', { requestId: connectionId }).then(resolve).catch(reject);
+    ipc.invoke('grpc:cancel-request', { requestId: connectionId }).then(resolve).catch(reject);
   });
 };
 
 export const endGrpcConnection = async (connectionId) => {
   return new Promise((resolve, reject) => {
-    const { ipcRenderer } = window;
-    ipcRenderer.invoke('grpc:end-request', { requestId: connectionId }).then(resolve).catch(reject);
+    ipc.invoke('grpc:end-request', { requestId: connectionId }).then(resolve).catch(reject);
   });
 };
 
@@ -169,8 +156,7 @@ export const endGrpcConnection = async (connectionId) => {
  */
 export const isGrpcConnectionActive = async (connectionId) => {
   return new Promise((resolve, reject) => {
-    const { ipcRenderer } = window;
-    ipcRenderer.invoke('grpc:is-connection-active', connectionId)
+    ipc.invoke('grpc:is-connection-active', connectionId)
       .then((response) => {
         if (response.success) {
           resolve(response.isActive);
@@ -197,9 +183,7 @@ export const isGrpcConnectionActive = async (connectionId) => {
  */
 export const generateGrpcSampleMessage = async (methodPath, existingMessage = null, options = {}) => {
   return new Promise((resolve, reject) => {
-    const { ipcRenderer } = window;
-
-    ipcRenderer.invoke('grpc:generate-sample-message', {
+    ipc.invoke('grpc:generate-sample-message', {
       methodPath,
       existingMessage,
       options
@@ -255,8 +239,7 @@ export const sendWsRequest = async (item, collection, environment, runtimeVariab
  */
 export const queueWsMessage = async (item, collection, environment, runtimeVariables, messageContent) => {
   return new Promise((resolve, reject) => {
-    const { ipcRenderer } = window;
-    ipcRenderer.invoke('renderer:ws:queue-message', {
+    ipc.invoke('renderer:ws:queue-message', {
       item,
       collection,
       environment,
@@ -268,11 +251,10 @@ export const queueWsMessage = async (item, collection, environment, runtimeVaria
 
 export const startWsConnection = async (item, collection, environment, runtimeVariables, options) => {
   return new Promise((resolve, reject) => {
-    const { ipcRenderer } = window;
     const request = item.draft ? item.draft : item;
     const settings = item.draft ? item.draft.settings : item.settings;
 
-    ipcRenderer
+    ipc
       .invoke('renderer:ws:start-connection', {
         request,
         collection,
@@ -298,8 +280,7 @@ export const startWsConnection = async (item, collection, environment, runtimeVa
  */
 export const sendWsMessage = async (item, collectionUid, message) => {
   return new Promise((resolve, reject) => {
-    const { ipcRenderer } = window;
-    ipcRenderer.invoke('renderer:ws:send-message', item.uid, collectionUid, message).then(resolve).catch(reject);
+    ipc.invoke('renderer:ws:send-message', item.uid, collectionUid, message).then(resolve).catch(reject);
   });
 };
 
@@ -310,8 +291,7 @@ export const sendWsMessage = async (item, collectionUid, message) => {
  */
 export const closeWsConnection = async (requestId) => {
   return new Promise((resolve, reject) => {
-    const { ipcRenderer } = window;
-    ipcRenderer.invoke('renderer:ws:close-connection', requestId).then(resolve).catch(reject);
+    ipc.invoke('renderer:ws:close-connection', requestId).then(resolve).catch(reject);
   });
 };
 
@@ -322,8 +302,7 @@ export const closeWsConnection = async (requestId) => {
  */
 export const isWsConnectionActive = async (requestId) => {
   return new Promise((resolve, reject) => {
-    const { ipcRenderer } = window;
-    ipcRenderer.invoke('renderer:ws:is-connection-active', requestId).then(resolve).catch(reject);
+    ipc.invoke('renderer:ws:is-connection-active', requestId).then(resolve).catch(reject);
   });
 };
 
@@ -334,7 +313,6 @@ export const isWsConnectionActive = async (requestId) => {
  */
 export const getWsConnectionStatus = async (requestId) => {
   return new Promise((resolve, reject) => {
-    const { ipcRenderer } = window;
-    ipcRenderer.invoke('renderer:ws:connection-status', requestId).then(resolve).catch(reject);
+    ipc.invoke('renderer:ws:connection-status', requestId).then(resolve).catch(reject);
   });
 };

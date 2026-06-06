@@ -5,9 +5,9 @@ import get from 'lodash/get';
 import { IconDownload } from '@tabler/icons';
 import classnames from 'classnames';
 import ActionIcon from 'ui/ActionIcon/index';
+import ipc from 'utils/common/ipc';
 
 const ResponseDownload = forwardRef(({ item, children }, ref) => {
-  const { ipcRenderer } = window;
   const response = item.response || {};
   const isDisabled = !response.dataBuffer || response.stream?.running;
   const elementRef = useRef(null);
@@ -22,7 +22,7 @@ const ResponseDownload = forwardRef(({ item, children }, ref) => {
       return;
     }
     return new Promise((resolve, reject) => {
-      ipcRenderer
+      ipc
         .invoke('renderer:save-response-to-file', response, item?.requestSent?.url, item.pathname)
         .then((result) => {
           if (result && result.success) {

@@ -3,9 +3,9 @@ import { grpcResponseReceived, runGrpcRequestEvent } from 'providers/ReduxStore/
 import { useDispatch } from 'react-redux';
 import { isElectron } from 'utils/common/platform';
 import { updateActiveConnectionsInStore } from 'providers/ReduxStore/slices/collections/actions';
+import ipc from 'utils/common/ipc';
 
 const useGrpcEventListeners = () => {
-  const { ipcRenderer } = window;
   const dispatch = useDispatch();
 
   useEffect(() => {
@@ -14,7 +14,7 @@ const useGrpcEventListeners = () => {
     }
 
     // Handle gRPC requestSent event
-    const removeGrpcRequestSentListener = ipcRenderer.on('grpc:request', (requestId, collectionUid, eventData) => {
+    const removeGrpcRequestSentListener = ipc.on('grpc:request', (requestId, collectionUid, eventData) => {
       dispatch(runGrpcRequestEvent({
         eventType: 'request',
         itemUid: requestId,
@@ -24,7 +24,7 @@ const useGrpcEventListeners = () => {
       }));
     });
 
-    const removeGrpcMessageSentListener = ipcRenderer.on('grpc:message', (requestId, collectionUid, eventData) => {
+    const removeGrpcMessageSentListener = ipc.on('grpc:message', (requestId, collectionUid, eventData) => {
       dispatch(runGrpcRequestEvent({
         eventType: 'message',
         itemUid: requestId,
@@ -35,7 +35,7 @@ const useGrpcEventListeners = () => {
     });
 
     // Handle gRPC response event (for unary calls and streaming)
-    const removeGrpcResponseListener = ipcRenderer.on(`grpc:response`, (requestId, collectionUid, data) => {
+    const removeGrpcResponseListener = ipc.on(`grpc:response`, (requestId, collectionUid, data) => {
       dispatch(grpcResponseReceived({
         itemUid: requestId,
         collectionUid: collectionUid,
@@ -45,7 +45,7 @@ const useGrpcEventListeners = () => {
     });
 
     // Handle gRPC metadata
-    const removeGrpcMetadataListener = ipcRenderer.on(`grpc:metadata`, (requestId, collectionUid, data) => {
+    const removeGrpcMetadataListener = ipc.on(`grpc:metadata`, (requestId, collectionUid, data) => {
       dispatch(grpcResponseReceived({
         itemUid: requestId,
         collectionUid: collectionUid,
@@ -55,7 +55,7 @@ const useGrpcEventListeners = () => {
     });
 
     // Handle gRPC status updates
-    const removeGrpcStatusListener = ipcRenderer.on(`grpc:status`, (requestId, collectionUid, data) => {
+    const removeGrpcStatusListener = ipc.on(`grpc:status`, (requestId, collectionUid, data) => {
       dispatch(grpcResponseReceived({
         itemUid: requestId,
         collectionUid: collectionUid,
@@ -65,7 +65,7 @@ const useGrpcEventListeners = () => {
     });
 
     // Handle gRPC errors
-    const removeGrpcErrorListener = ipcRenderer.on(`grpc:error`, (requestId, collectionUid, data) => {
+    const removeGrpcErrorListener = ipc.on(`grpc:error`, (requestId, collectionUid, data) => {
       dispatch(grpcResponseReceived({
         itemUid: requestId,
         collectionUid: collectionUid,
@@ -75,7 +75,7 @@ const useGrpcEventListeners = () => {
     });
 
     // Handle gRPC end event
-    const removeGrpcEndListener = ipcRenderer.on(`grpc:server-end-stream`, (requestId, collectionUid, data) => {
+    const removeGrpcEndListener = ipc.on(`grpc:server-end-stream`, (requestId, collectionUid, data) => {
       dispatch(grpcResponseReceived({
         itemUid: requestId,
         collectionUid: collectionUid,
@@ -85,7 +85,7 @@ const useGrpcEventListeners = () => {
     });
 
     // Handle gRPC cancel event
-    const removeGrpcCancelListener = ipcRenderer.on(`grpc:server-cancel-stream`, (requestId, collectionUid, data) => {
+    const removeGrpcCancelListener = ipc.on(`grpc:server-cancel-stream`, (requestId, collectionUid, data) => {
       dispatch(grpcResponseReceived({
         itemUid: requestId,
         collectionUid: collectionUid,
@@ -94,7 +94,7 @@ const useGrpcEventListeners = () => {
       }));
     });
 
-    const removeGrpcConnectionsChangedListener = ipcRenderer.on(`grpc:connections-changed`, (data) => {
+    const removeGrpcConnectionsChangedListener = ipc.on(`grpc:connections-changed`, (data) => {
       dispatch(updateActiveConnectionsInStore(data));
     });
 

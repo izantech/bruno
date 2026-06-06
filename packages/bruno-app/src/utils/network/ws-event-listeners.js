@@ -2,10 +2,10 @@ import { useEffect } from 'react';
 import { wsResponseReceived, runWsRequestEvent } from 'providers/ReduxStore/slices/collections/index';
 import { useDispatch } from 'react-redux';
 import { isElectron } from 'utils/common/platform';
+import ipc from 'utils/common/ipc';
 import { updateActiveConnectionsInStore } from 'providers/ReduxStore/slices/collections/actions';
 
 const useWsEventListeners = () => {
-  const { ipcRenderer } = window;
   const dispatch = useDispatch();
 
   useEffect(() => {
@@ -14,7 +14,7 @@ const useWsEventListeners = () => {
     }
 
     // Handle WebSocket requestSent event
-    const removeWsRequestSentListener = ipcRenderer.on('main:ws:request', (requestId, collectionUid, eventData) => {
+    const removeWsRequestSentListener = ipc.on('main:ws:request', (requestId, collectionUid, eventData) => {
       dispatch(runWsRequestEvent({
         eventType: 'request',
         itemUid: requestId,
@@ -24,7 +24,7 @@ const useWsEventListeners = () => {
       }));
     });
 
-    const removeWsUpgradeListener = ipcRenderer.on('main:ws:upgrade', (requestId, collectionUid, eventData) => {
+    const removeWsUpgradeListener = ipc.on('main:ws:upgrade', (requestId, collectionUid, eventData) => {
       dispatch(wsResponseReceived({
         itemUid: requestId,
         collectionUid: collectionUid,
@@ -33,7 +33,7 @@ const useWsEventListeners = () => {
       }));
     });
 
-    const removeWsRedirectListener = ipcRenderer.on('main:ws:redirect', (requestId, collectionUid, eventData) => {
+    const removeWsRedirectListener = ipc.on('main:ws:redirect', (requestId, collectionUid, eventData) => {
       dispatch(wsResponseReceived({
         itemUid: requestId,
         collectionUid: collectionUid,
@@ -43,7 +43,7 @@ const useWsEventListeners = () => {
     });
 
     // Handle WebSocket message event
-    const removeWsMessageListener = ipcRenderer.on('main:ws:message', (requestId, collectionUid, eventData) => {
+    const removeWsMessageListener = ipc.on('main:ws:message', (requestId, collectionUid, eventData) => {
       dispatch(wsResponseReceived({
         itemUid: requestId,
         collectionUid: collectionUid,
@@ -53,7 +53,7 @@ const useWsEventListeners = () => {
     });
 
     // Handle WebSocket open event
-    const removeWsOpenListener = ipcRenderer.on('main:ws:open', (requestId, collectionUid, eventData) => {
+    const removeWsOpenListener = ipc.on('main:ws:open', (requestId, collectionUid, eventData) => {
       dispatch(wsResponseReceived({
         itemUid: requestId,
         collectionUid: collectionUid,
@@ -63,7 +63,7 @@ const useWsEventListeners = () => {
     });
 
     // Handle WebSocket close event
-    const removeWsCloseListener = ipcRenderer.on('main:ws:close', (requestId, collectionUid, eventData) => {
+    const removeWsCloseListener = ipc.on('main:ws:close', (requestId, collectionUid, eventData) => {
       dispatch(wsResponseReceived({
         itemUid: requestId,
         collectionUid: collectionUid,
@@ -73,7 +73,7 @@ const useWsEventListeners = () => {
     });
 
     // Handle WebSocket error event
-    const removeWsErrorListener = ipcRenderer.on('main:ws:error', (requestId, collectionUid, eventData) => {
+    const removeWsErrorListener = ipc.on('main:ws:error', (requestId, collectionUid, eventData) => {
       dispatch(wsResponseReceived({
         itemUid: requestId,
         collectionUid: collectionUid,
@@ -83,7 +83,7 @@ const useWsEventListeners = () => {
     });
 
     // Handle WebSocket connecting event
-    const removeWsConnectingListener = ipcRenderer.on('main:ws:connecting', (requestId, collectionUid, eventData) => {
+    const removeWsConnectingListener = ipc.on('main:ws:connecting', (requestId, collectionUid, eventData) => {
       dispatch(wsResponseReceived({
         itemUid: requestId,
         collectionUid: collectionUid,
@@ -92,7 +92,7 @@ const useWsEventListeners = () => {
       }));
     });
 
-    const removeWsConnectionsChangedListener = ipcRenderer.on('main:ws:connections-changed', (data) => {
+    const removeWsConnectionsChangedListener = ipc.on('main:ws:connections-changed', (data) => {
       dispatch(updateActiveConnectionsInStore(data));
     });
 
