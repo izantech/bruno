@@ -20,7 +20,8 @@ module.exports = runESMImports().then(() => defineConfig([
       'packages/bruno-js/src/sandbox/bundle-browser-rollup.js',
       'packages/bruno-app/public/static/**/*',
       'packages/bruno-app/.next/**/*',
-      'packages/bruno-electron/web/**/*'
+      'packages/bruno-electron/web/**/*',
+      'packages/bruno-ios/**/*.ts'
     ]
   },
   {
