@@ -16,6 +16,7 @@ import {
 import Modal from 'components/Modal';
 import Button from 'ui/Button';
 import { saveCollectionSecurityConfig } from 'providers/ReduxStore/slices/collections/actions';
+import ipc from 'utils/common/ipc';
 import { findCollectionByPathname } from 'utils/collections';
 import StyledWrapper from './StyledWrapper';
 
@@ -115,7 +116,7 @@ const PostmanPackageReport = ({ report, collectionPath, onClose }) => {
     setInstalling(true);
     setInstallResult(null);
     try {
-      const result = await window.ipcRenderer.invoke(
+      const result = await ipc.invoke(
         'renderer:install-postman-packages',
         collectionPath,
         needsInstall

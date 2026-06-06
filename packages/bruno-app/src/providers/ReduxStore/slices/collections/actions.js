@@ -26,7 +26,7 @@ import {
 } from 'utils/collections';
 import { uuid, waitForNextTick } from 'utils/common';
 import { cancelNetworkRequest, connectWS, sendGrpcRequest, sendNetworkRequest, sendWsRequest } from 'utils/network/index';
-import { callIpc } from 'utils/common/ipc';
+import ipc, { callIpc } from 'utils/common/ipc';
 import brunoClipboard from 'utils/bruno-clipboard';
 
 import {
@@ -2835,8 +2835,7 @@ export const moveCollectionAndPersist
       reordered.splice(targetIndex, 0, draggedItem);
       const collectionPaths = reordered.map((c) => c.pathname);
 
-      return window.ipcRenderer
-        .invoke('renderer:reorder-workspace-collections', activeWorkspace.pathname, collectionPaths)
+      return ipc.invoke('renderer:reorder-workspace-collections', activeWorkspace.pathname, collectionPaths)
         .then(() => {
           dispatch(moveCollection({ draggedItem, targetItem }));
         })
@@ -2899,8 +2898,7 @@ export const fetchOauth2Credentials = (payload) => async (dispatch, getState) =>
   const globalEnvironmentVariables = getGlobalEnvironmentVariables({ globalEnvironments, activeGlobalEnvironmentUid });
   request.globalEnvironmentVariables = globalEnvironmentVariables;
   return new Promise((resolve, reject) => {
-    window.ipcRenderer
-      .invoke('renderer:fetch-oauth2-credentials', { itemUid, request, collection })
+    ipc.invoke('renderer:fetch-oauth2-credentials', { itemUid, request, collection })
       .then(({ credentials, url, collectionUid, credentialsId, debugInfo }) => {
         dispatch(
           collectionAddOauth2CredentialsByUrl({
@@ -2926,8 +2924,7 @@ export const refreshOauth2Credentials = (payload) => async (dispatch, getState) 
   const globalEnvironmentVariables = getGlobalEnvironmentVariables({ globalEnvironments, activeGlobalEnvironmentUid });
   request.globalEnvironmentVariables = globalEnvironmentVariables;
   return new Promise((resolve, reject) => {
-    window.ipcRenderer
-      .invoke('renderer:refresh-oauth2-credentials', { itemUid, request, collection })
+    ipc.invoke('renderer:refresh-oauth2-credentials', { itemUid, request, collection })
       .then(({ credentials, url, collectionUid, debugInfo, credentialsId }) => {
         dispatch(
           collectionAddOauth2CredentialsByUrl({
@@ -2949,8 +2946,7 @@ export const refreshOauth2Credentials = (payload) => async (dispatch, getState) 
 export const clearOauth2Cache = (payload) => async (dispatch, getState) => {
   const { collectionUid, url, credentialsId } = payload;
   return new Promise((resolve, reject) => {
-    window.ipcRenderer
-      .invoke('clear-oauth2-cache', collectionUid, url, credentialsId)
+    ipc.invoke('clear-oauth2-cache', collectionUid, url, credentialsId)
       .then(() => {
         dispatch(
           collectionClearOauth2CredentialsByUrlAndCredentialsId({
@@ -2967,8 +2963,7 @@ export const clearOauth2Cache = (payload) => async (dispatch, getState) => {
 
 export const isOauth2AuthorizationRequestInProgress = () => async () => {
   return new Promise((resolve, reject) => {
-    window.ipcRenderer
-      .invoke('renderer:is-oauth2-authorization-request-in-progress')
+    ipc.invoke('renderer:is-oauth2-authorization-request-in-progress')
       .then(resolve)
       .catch(reject);
   });
@@ -2976,8 +2971,7 @@ export const isOauth2AuthorizationRequestInProgress = () => async () => {
 
 export const cancelOauth2AuthorizationRequest = () => async () => {
   return new Promise((resolve, reject) => {
-    window.ipcRenderer
-      .invoke('renderer:cancel-oauth2-authorization-request')
+    ipc.invoke('renderer:cancel-oauth2-authorization-request')
       .then(resolve)
       .catch(reject);
   });

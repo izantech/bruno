@@ -1,3 +1,5 @@
+import ipc from 'utils/common/ipc';
+
 /**
  * Filesystem utilities for the renderer process
  * These functions communicate with the main process via IPC
@@ -9,7 +11,7 @@
  * @returns {Promise<boolean>} - True if file exists, false otherwise
  */
 export const existsSync = async (filePath) => {
-  return await window.ipcRenderer.invoke('renderer:exists-sync', filePath);
+  return await ipc.invoke('renderer:exists-sync', filePath);
 };
 
 /**
@@ -19,11 +21,11 @@ export const existsSync = async (filePath) => {
  * @returns {Promise<string>} - The resolved absolute path
  */
 export const resolvePath = async (relativePath, basePath) => {
-  return await window.ipcRenderer.invoke('renderer:resolve-path', relativePath, basePath);
+  return await ipc.invoke('renderer:resolve-path', relativePath, basePath);
 };
 
 export const browseDirectory = async (pathname) => {
-  return await window.ipcRenderer.invoke('renderer:browse-directory', pathname);
+  return await ipc.invoke('renderer:browse-directory', pathname);
 };
 
 /**
@@ -32,5 +34,5 @@ export const browseDirectory = async (pathname) => {
  * @returns {Promise<boolean>} - True if path is a directory, false otherwise
  */
 export const isDirectory = async (dirPath) => {
-  return await window.ipcRenderer.invoke('renderer:is-directory', dirPath);
+  return await ipc.invoke('renderer:is-directory', dirPath);
 };

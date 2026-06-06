@@ -2,6 +2,7 @@ import { memo } from 'react';
 import SwaggerUI from 'swagger-ui-react';
 import StyledWrapper from './StyledWrapper';
 import { serializeBody } from './serializeBody';
+import ipc from 'utils/common/ipc';
 
 const serializeHeaders = (headers) => {
   if (!headers) return {};
@@ -14,7 +15,7 @@ const serializeHeaders = (headers) => {
 };
 
 const proxiedFetch = async (url, options = {}) => {
-  const result = await window.ipcRenderer.invoke('renderer:swagger-fetch', {
+  const result = await ipc.invoke('renderer:swagger-fetch', {
     url,
     method: options.method || 'GET',
     headers: serializeHeaders(options.headers),

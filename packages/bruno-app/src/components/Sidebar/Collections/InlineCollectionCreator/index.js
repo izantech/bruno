@@ -9,6 +9,7 @@ import { sanitizeName, validateName, validateNameError } from 'utils/common/rege
 import { DEFAULT_COLLECTION_FORMAT } from 'utils/common/constants';
 import { multiLineMsg } from 'utils/common';
 import { formatIpcError } from 'utils/common/error';
+import ipc from 'utils/common/ipc';
 import StyledWrapper from './StyledWrapper';
 
 const InlineCollectionCreator = ({ onComplete, onCancel, onOpenAdvanced }) => {
@@ -42,7 +43,7 @@ const InlineCollectionCreator = ({ onComplete, onCancel, onOpenAdvanced }) => {
     };
 
     if (defaultLocation) {
-      window.ipcRenderer?.invoke('renderer:find-unique-folder-name', 'Untitled Collection', defaultLocation)
+      ipc.invoke('renderer:find-unique-folder-name', 'Untitled Collection', defaultLocation)
         ?.then((name) => focusAndSelect(name))
         ?.catch(() => focusAndSelect());
     } else {

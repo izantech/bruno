@@ -1,6 +1,7 @@
 import fileDialog from 'file-dialog';
 import { BrunoError } from 'utils/common/error';
 import { safeParseJSON } from 'utils/common/index';
+import ipc from 'utils/common/ipc';
 
 const readFile = (files) => {
   return new Promise((resolve, reject) => {
@@ -13,7 +14,7 @@ const readFile = (files) => {
 
 const postmanToBruno = (collection) => {
   return new Promise((resolve, reject) => {
-    window.ipcRenderer.invoke('renderer:convert-postman-to-bruno', collection)
+    ipc.invoke('renderer:convert-postman-to-bruno', collection)
       .then((result) => resolve(result))
       .catch((err) => {
         console.error('Error converting Postman to Bruno via Electron:', err);

@@ -1,6 +1,7 @@
 import React from 'react';
 
 import Bruno from 'components/Bruno/index';
+import ipc from 'utils/common/ipc';
 
 class ErrorBoundary extends React.Component {
   constructor(props) {
@@ -22,19 +23,17 @@ class ErrorBoundary extends React.Component {
   }
 
   async clearCache() {
-    await window.ipcRenderer.invoke('main:cache-clear');
+    await ipc.invoke('main:cache-clear');
   }
 
   returnToApp() {
-    const { ipcRenderer } = window;
-    ipcRenderer.invoke('open-file');
+    ipc.invoke('open-file');
 
     this.setState({ hasError: false, error: null, errorInfo: null });
   }
 
   forceQuit() {
-    const { ipcRenderer } = window;
-    ipcRenderer.invoke('main:force-quit');
+    ipc.invoke('main:force-quit');
   }
 
   render() {
