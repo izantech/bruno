@@ -1,11 +1,11 @@
 let _backend = null;
 
 // Lazy-load @usebruno/filestore only inside the Capacitor backend (never on Electron).
-// A static top-level import would cause the module graph — which includes worker-script
-// → worker_threads/require/__dirname — to be evaluated on Electron renderer startup,
-// crashing the app. The dynamic import is cached after the first resolution.
+// The '/web' subpath excludes the worker chain (worker-script → worker_threads/require/
+// __dirname); the bare entry would pull that graph into the browser bundle and crash on
+// module-eval under WKWebView. The dynamic import is cached after the first resolution.
 let _filestoreModule = null;
-const filestore = () => (_filestoreModule ??= import('@usebruno/filestore'));
+const filestore = () => (_filestoreModule ??= import('@usebruno/filestore/web'));
 
 const NO_NATIVE_HOST = (channel) => Promise.reject(new Error(`invoke(${channel}): no native host`));
 
