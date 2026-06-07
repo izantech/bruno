@@ -1,4 +1,4 @@
-const ohm = require('ohm-js');
+const ohm = require('../common/ohm');
 const _ = require('lodash');
 const { safeParseJson, outdentString } = require('../utils');
 const parseRequest = require('./request/bruToJson');

@@ -1,4 +1,4 @@
-const ohm = require('ohm-js');
+const ohm = require('./common/ohm');
 const _ = require('lodash');
 
 // this is done to avoid breaking existing pairlist mapping so
