@@ -115,6 +115,11 @@ const saveZoomPreferences = async (percentage) => {
 
 // Helper function to focus and restore the main window
 const focusMainWindow = () => {
+  // During Playwright runs, never steal focus: the suite spawns many windows
+  // in parallel and would otherwise make the machine unusable while it runs.
+  if (process.env.PLAYWRIGHT === 'true') {
+    return;
+  }
   if (mainWindow) {
     app.focus({ steal: true });
     if (mainWindow.isMinimized()) {
@@ -346,7 +351,15 @@ app.on('ready', async () => {
       const zoomLevel = percentageToZoomLevel(zoomPercentage);
       mainWindow.webContents.setZoomLevel(zoomLevel);
     }
-    mainWindow.show();
+    if (process.env.PLAYWRIGHT === 'true') {
+      // Reveal the window without activating the app so parallel test windows
+      // don't steal keyboard focus on macOS. Playwright drives it over CDP,
+      // which works regardless of activation state.
+      app.dock?.hide();
+      mainWindow.showInactive();
+    } else {
+      mainWindow.show();
+    }
   });
   const devPort = process.env.BRUNO_DEV_PORT || 3000;
   const url = isDev
