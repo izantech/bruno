@@ -59,6 +59,25 @@ module.exports = [
     external: externalDeps
   },
   {
+    input: 'src/index.web.ts',
+    output: [
+      {
+        file: 'dist/cjs/index.web.js',
+        format: 'cjs',
+        sourcemap: true,
+        exports: 'named'
+      },
+      {
+        file: 'dist/esm/index.web.js',
+        format: 'esm',
+        sourcemap: true,
+        exports: 'named'
+      }
+    ],
+    plugins: commonPlugins,
+    external: externalDeps
+  },
+  {
     input: 'src/workers/worker-script.ts',
     output: [
       {
