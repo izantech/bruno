@@ -115,6 +115,10 @@ const createCapacitorBackend = () => {
   // correct collectionUid (the collection-root uid, not the item-path uid).
   const collectionRoots = new Set();
 
+  // Guards against re-emitting main:workspace-opened if renderer:ready fires more
+  // than once (e.g. a strict-mode double mount).
+  let workspaceOpenedEmitted = false;
+
   // Local registry for the synthesized main:* events the mount flow drives in JS.
   // Native push events arrive separately via plugin.addListener.
   const listeners = new Map();
@@ -159,16 +163,27 @@ const createCapacitorBackend = () => {
     });
   };
 
-  const openWorkspace = async () => {
+  // Scans the native workspace and returns collection metadata. Non-emitting:
+  // the caller drives main:collection-opened and the tree synthesis. Shared by
+  // open-workspace (which emits) and load-workspace-collections (which only lists).
+  const listCollections = async () => {
     const { parseCollection } = await filestore();
     const { collections } = await (await ensurePlugin()).scanWorkspace();
-    for (const collection of collections) {
+    return collections.map((collection) => {
       const { token, format } = collection;
       // Swift returns brunoConfig as a parsed object for 'bru' collections and as
       // { raw: <yamlString> } for 'yml' collections (Swift does no YAML parsing).
       const brunoConfig = collection.brunoConfig && collection.brunoConfig.raw
         ? parseCollection(collection.brunoConfig.raw, { format: 'yml' })
         : collection.brunoConfig;
+      const name = (brunoConfig && brunoConfig.name) || basename(token);
+      return { token, format, brunoConfig, name };
+    });
+  };
+
+  const openWorkspace = async () => {
+    const entries = await listCollections();
+    for (const { token, format, brunoConfig } of entries) {
       collectionRoots.add(token);
       const uid = uidFromToken(token);
       emit('main:collection-opened', token, uid, brunoConfig);
@@ -189,11 +204,30 @@ const createCapacitorBackend = () => {
 
     switch (channel) {
       case 'renderer:ready':
+        // Capacitor has no main process to push the boot workspace; synthesize the
+        // implicit @documents workspace so the renderer's boot chain (workspaceOpenedEvent
+        // -> loadWorkspaceCollections -> switchWorkspace -> open-multiple-collections) runs.
+        // Deferred so this handler resolves and the renderer's main:workspace-opened
+        // listener is live before the broadcast.
+        if (!workspaceOpenedEmitted) {
+          workspaceOpenedEmitted = true;
+          queueMicrotask(() => {
+            emit('main:workspace-opened', '@documents', 'default', { name: 'Documents', type: 'default' });
+          });
+        }
         return Promise.resolve();
 
       case 'renderer:open-collection':
       case 'renderer:open-multiple-collections':
         return openWorkspace();
+
+      case 'renderer:load-workspace-collections': {
+        const entries = await listCollections();
+        return entries.map(({ name, token }) => ({ name, path: token }));
+      }
+
+      case 'renderer:get-last-opened-workspaces':
+        return Promise.resolve(['@documents']);
 
       case 'renderer:mount-collection': {
         const [{ collectionPathname }] = args;
