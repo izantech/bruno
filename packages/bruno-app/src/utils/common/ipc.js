@@ -426,9 +426,16 @@ const createCapacitorBackend = () => {
       if (channel === 'main:collection-opened') return handler(event.pathname, event.uid, event.brunoConfig);
       return handler(event);
     };
-    getPlugin().addListener(channel, adapt).then((registration) => {
-      nativeHandle = registration;
-    });
+    // These main:* events are synthesized in JS via emit(); the native
+    // subscription is best-effort for events the native side may push directly.
+    // addListener may return a Promise or a sync handle (and getPlugin() may be
+    // absent early), so normalize and never let registration crash the renderer.
+    const plugin = getPlugin();
+    if (plugin && typeof plugin.addListener === 'function') {
+      Promise.resolve(plugin.addListener(channel, adapt))
+        .then((registration) => { nativeHandle = registration; })
+        .catch(() => {});
+    }
 
     return () => {
       const set = listeners.get(channel);
