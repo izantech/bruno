@@ -2,10 +2,11 @@ import type { CapacitorConfig } from '@capacitor/cli';
 
 const devPort = process.env.BRUNO_DEV_PORT;
 
-const config: CapacitorConfig = {
+const config: CapacitorConfig & { packageClassList?: string[] } = {
   appId: 'com.usebruno.app.ios',
   appName: 'Bruno',
   webDir: 'www',
+  packageClassList: ['BrunoFilesystemPlugin'],
   ios: {
     contentInset: 'always'
   },

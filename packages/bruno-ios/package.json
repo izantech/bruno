@@ -4,7 +4,7 @@
   "private": true,
   "scripts": {
     "copy-web": "node ./scripts/copy-web.js",
-    "sync": "cap sync ios",
+    "sync": "cap sync ios && node ./scripts/patch-config.js",
     "build": "tsc",
     "build:cap": "npm run copy-web && npm run sync",
     "test": "jest --passWithNoTests",
