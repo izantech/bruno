@@ -71,6 +71,35 @@ const simpleHash = (str) => {
 
 const uidFromToken = (token) => `${simpleHash(token)}`.padEnd(21, '0');
 
+// Mirrors hydrateRequestWithUuid in bruno-electron/src/utils/collection.js: parseRequest
+// from @usebruno/filestore never assigns uids, but the renderer keys items by uid. Without
+// this, parsed requests reach Redux with uid=undefined and RequestTabPanel renders a
+// perpetual spinner. Uids are derived deterministically from the item path so they stay
+// stable across re-synthesis. Every nested access is guarded — parsed shapes may be absent.
+const hydrateRequestWithUuid = (parsed, pathname) => {
+  parsed.uid = uidFromToken(pathname);
+
+  (parsed.request?.params || []).forEach((param, index) => (param.uid = uidFromToken(`${pathname}:params:${index}`)));
+  (parsed.request?.headers || []).forEach((header, index) => (header.uid = uidFromToken(`${pathname}:headers:${index}`)));
+  (parsed.request?.vars?.req || []).forEach((variable, index) => (variable.uid = uidFromToken(`${pathname}:vars.req:${index}`)));
+  (parsed.request?.vars?.res || []).forEach((variable, index) => (variable.uid = uidFromToken(`${pathname}:vars.res:${index}`)));
+  (parsed.request?.assertions || []).forEach((assertion, index) => (assertion.uid = uidFromToken(`${pathname}:assertions:${index}`)));
+  (parsed.request?.body?.formUrlEncoded || []).forEach((param, index) => (param.uid = uidFromToken(`${pathname}:formUrlEncoded:${index}`)));
+  (parsed.request?.body?.multipartForm || []).forEach((param, index) => (param.uid = uidFromToken(`${pathname}:multipartForm:${index}`)));
+  (parsed.request?.body?.file || []).forEach((param, index) => (param.uid = uidFromToken(`${pathname}:file:${index}`)));
+
+  (parsed.examples || []).forEach((example, eIndex) => {
+    example.uid = uidFromToken(`${pathname}:example:${eIndex}`);
+    example.itemUid = parsed.uid;
+    (example.request?.params || []).forEach((param, index) => (param.uid = uidFromToken(`${pathname}:example:${eIndex}:params:${index}`)));
+    (example.request?.headers || []).forEach((header, index) => (header.uid = uidFromToken(`${pathname}:example:${eIndex}:req-headers:${index}`)));
+    (example.response?.headers || []).forEach((header, index) => (header.uid = uidFromToken(`${pathname}:example:${eIndex}:res-headers:${index}`)));
+    (example.request?.body?.multipartForm || []).forEach((param, index) => (param.uid = uidFromToken(`${pathname}:example:${eIndex}:multipartForm:${index}`)));
+    (example.request?.body?.formUrlEncoded || []).forEach((param, index) => (param.uid = uidFromToken(`${pathname}:example:${eIndex}:formUrlEncoded:${index}`)));
+    (example.request?.body?.file || []).forEach((param, index) => (param.uid = uidFromToken(`${pathname}:example:${eIndex}:file:${index}`)));
+  });
+};
+
 /**
  * Returns the longest registered collection-root token that is a prefix of `itemPath`.
  * Falls back to the first path segment under @documents (e.g. "@documents/MyCol") if
@@ -155,9 +184,11 @@ const createCapacitorBackend = () => {
           data: parseEnvironment(content, { format })
         });
       } else if (isRequestFile(name, format)) {
+        const parsed = parseRequest(content, { format });
+        hydrateRequestWithUuid(parsed, entry.path);
         emit('main:collection-tree-updated', 'addFile', {
           meta: { collectionUid: uid, pathname: entry.path, name },
-          data: parseRequest(content, { format })
+          data: parsed
         });
       }
     });
