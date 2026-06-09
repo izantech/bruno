@@ -12,8 +12,6 @@ const NO_NATIVE_HOST = (channel) => Promise.reject(new Error(`invoke(${channel})
 // Channel prefixes whose features land in later batches; they must keep rejecting
 // with the same 'no native host' error the Batch-0 capacitor stub produced.
 const REJECTING_PREFIXES = [
-  'send-http-request',
-  'cancel-http-request',
   'fetch-gql-schema',
   'renderer:save-response-to-file',
   'renderer:fetch-oauth2-credentials',
@@ -136,6 +134,16 @@ const createCapacitorBackend = () => {
       await new Promise((r) => setTimeout(r, 50));
     }
     throw new Error('BrunoFilesystem plugin not available after 3s');
+  };
+
+  const getHttpPlugin = () => window.Capacitor?.Plugins?.BrunoHttp;
+  const ensureHttpPlugin = async () => {
+    for (let i = 0; i < 60; i++) {
+      const p = getHttpPlugin();
+      if (p) return p;
+      await new Promise((r) => setTimeout(r, 50));
+    }
+    return null;
   };
 
   // Registry of mounted collection root tokens populated by open-collection and
@@ -513,6 +521,65 @@ const createCapacitorBackend = () => {
 
       case 'renderer:show-in-folder':
         return Promise.resolve();
+
+      case 'send-http-request': {
+        const [item, collection, environment, runtimeVariables] = args;
+        const { prepareIosRequest } = await import('utils/network/prepare-ios-request');
+        const resolved = prepareIosRequest(item, collection, environment, runtimeVariables);
+        const plugin = await ensureHttpPlugin();
+        if (!plugin) return NO_NATIVE_HOST(channel);
+        const native = await plugin.send(resolved);
+        if (native.isCancel) {
+          return { error: 'REQUEST_CANCELLED', statusText: 'REQUEST_CANCELLED', isCancel: true, timeline: [] };
+        }
+        if (native.error && typeof native.status !== 'number') {
+          return { error: native.error, statusText: native.statusText, timeline: [] };
+        }
+        const responseHeaders = native.headers || {};
+        const contentType = responseHeaders['content-type'] || responseHeaders['Content-Type'] || '';
+        let data;
+        try {
+          const decoded = new TextDecoder('utf-8').decode(Uint8Array.from(atob(native.dataBase64 || ''), (c) => c.charCodeAt(0)));
+          if (contentType.includes('application/json')) {
+            try {
+              data = JSON.parse(decoded);
+            } catch {
+              data = decoded;
+            }
+          } else {
+            data = decoded;
+          }
+        } catch {
+          data = '';
+        }
+        return {
+          state: 'success',
+          data,
+          dataBuffer: native.dataBase64,
+          headers: responseHeaders,
+          size: native.size,
+          status: native.status,
+          statusText: native.statusText,
+          duration: native.duration,
+          timeline: [],
+          stream: null,
+          requestSent: {
+            url: resolved.url,
+            method: resolved.method,
+            headers: resolved.headers,
+            data: resolved.body && resolved.body.kind !== 'none' ? resolved.body.data : undefined,
+            timestamp: Date.now()
+          }
+        };
+      }
+
+      case 'cancel-http-request': {
+        const [cancelTokenUid] = args;
+        const plugin = await ensureHttpPlugin();
+        if (!plugin) return Promise.resolve();
+        await plugin.cancel({ cancelTokenUid });
+        return Promise.resolve();
+      }
 
       default:
         return NO_NATIVE_HOST(channel);

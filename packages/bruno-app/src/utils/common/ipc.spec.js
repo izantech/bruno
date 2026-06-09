@@ -228,6 +228,155 @@ describe('capacitor backend — save paths', () => {
   });
 });
 
+const mockHttpPlugin = {
+  send: jest.fn(),
+  cancel: jest.fn()
+};
+
+const withCapacitorHttp = () => {
+  window.Capacitor = {
+    isNativePlatform: () => true,
+    Plugins: {
+      BrunoFilesystem: mockPlugin,
+      BrunoHttp: mockHttpPlugin
+    }
+  };
+};
+
+jest.mock('utils/network/prepare-ios-request', () => ({
+  prepareIosRequest: jest.fn(() => ({
+    url: 'https://api.example.com/users',
+    method: 'GET',
+    headers: { 'content-type': 'application/json' },
+    body: { kind: 'none' },
+    timeout: 0,
+    cancelTokenUid: 'cancel-uid-1'
+  }))
+}));
+
+describe('capacitor backend — HTTP send', () => {
+  beforeEach(() => {
+    withCapacitorHttp();
+    mockPlugin.writeFile.mockResolvedValue(undefined);
+    jest.clearAllMocks();
+    // Re-apply plugin after clearAllMocks
+    withCapacitorHttp();
+  });
+
+  const item = { uid: 'item-1', cancelTokenUid: 'cancel-uid-1', request: { method: 'GET', url: 'https://api.example.com/users', headers: [], params: [], body: { mode: 'none' }, auth: { mode: 'none' } } };
+  const collection = { uid: 'col-1' };
+
+  it('send-http-request no longer hits NO_NATIVE_HOST under Capacitor', async () => {
+    mockHttpPlugin.send.mockResolvedValue({
+      status: 200,
+      statusText: 'OK',
+      headers: {},
+      dataBase64: btoa('ok'),
+      size: 2,
+      duration: 10
+    });
+    await expect(ipc.invoke('send-http-request', item, collection, null, {})).resolves.not.toThrow();
+  });
+
+  it('maps a 200 result to the renderer contract', async () => {
+    const base64Data = btoa(JSON.stringify({ id: 1 }));
+    mockHttpPlugin.send.mockResolvedValue({
+      status: 200,
+      statusText: 'OK',
+      headers: { 'content-type': 'application/json' },
+      dataBase64: base64Data,
+      size: 10,
+      duration: 42
+    });
+    const result = await ipc.invoke('send-http-request', item, collection, null, {});
+    expect(result.state).toBe('success');
+    expect(result.status).toBe(200);
+    expect(result.data).toEqual({ id: 1 });
+    expect(result.dataBuffer).toBe(base64Data);
+    expect(typeof result.headers).toBe('object');
+    expect(Array.isArray(result.headers)).toBe(false);
+    expect(result.timeline).toEqual([]);
+    expect(result.stream).toBeNull();
+  });
+
+  it('decodes multibyte UTF-8 JSON body without mojibake', async () => {
+    const payload = { msg: 'héllo🚀' };
+    const encoded = new TextEncoder().encode(JSON.stringify(payload));
+    const base64Utf8 = btoa(String.fromCharCode(...encoded));
+    mockHttpPlugin.send.mockResolvedValue({
+      status: 200,
+      statusText: 'OK',
+      headers: { 'content-type': 'application/json' },
+      dataBase64: base64Utf8,
+      size: encoded.length,
+      duration: 5
+    });
+    const result = await ipc.invoke('send-http-request', item, collection, null, {});
+    expect(result.data).toEqual(payload);
+    expect(result.dataBuffer).toBe(base64Utf8);
+  });
+
+  it('resolves non-2xx (404) with numeric status and no throw', async () => {
+    mockHttpPlugin.send.mockResolvedValue({
+      status: 404,
+      statusText: 'Not Found',
+      headers: {},
+      dataBase64: btoa('not found'),
+      size: 9,
+      duration: 5
+    });
+    const result = await ipc.invoke('send-http-request', item, collection, null, {});
+    expect(result.state).toBe('success');
+    expect(result.status).toBe(404);
+  });
+
+  it('resolves transport failure to error-shaped object with no throw', async () => {
+    mockHttpPlugin.send.mockResolvedValue({
+      error: 'Network unreachable',
+      statusText: 'Network unreachable'
+    });
+    const result = await ipc.invoke('send-http-request', item, collection, null, {});
+    expect(result.error).toBe('Network unreachable');
+    expect(result.statusText).toBe('Network unreachable');
+    expect(result.timeline).toEqual([]);
+    expect(result.state).toBeUndefined();
+  });
+
+  it('resolves cancel result to cancel-shaped object', async () => {
+    mockHttpPlugin.send.mockResolvedValue({
+      isCancel: true,
+      error: 'REQUEST_CANCELLED',
+      statusText: 'REQUEST_CANCELLED'
+    });
+    const result = await ipc.invoke('send-http-request', item, collection, null, {});
+    expect(result.isCancel).toBe(true);
+    expect(result.error).toBe('REQUEST_CANCELLED');
+    expect(result.timeline).toEqual([]);
+  });
+
+  it('cancel-http-request forwards cancelTokenUid to plugin.cancel', async () => {
+    mockHttpPlugin.cancel.mockResolvedValue(undefined);
+    await ipc.invoke('cancel-http-request', 'cancel-uid-1');
+    expect(mockHttpPlugin.cancel).toHaveBeenCalledWith({ cancelTokenUid: 'cancel-uid-1' });
+  });
+
+  it('gracefully resolves when BrunoHttp plugin is missing (no crash)', async () => {
+    jest.useFakeTimers();
+    __resetIpcForTests();
+    window.Capacitor = {
+      isNativePlatform: () => true,
+      Plugins: { BrunoFilesystem: mockPlugin }
+    };
+    // BrunoHttp is absent — ensureHttpPlugin will poll then return null,
+    // which causes the case to resolve via NO_NATIVE_HOST (a rejection).
+    const result = ipc.invoke('send-http-request', item, collection, null, {});
+    // Advance past the full 60×50ms poll window so the loop exits immediately.
+    jest.runAllTimersAsync();
+    await expect(result).rejects.toThrow();
+    jest.useRealTimers();
+  });
+});
+
 describe('collectionRootFor', () => {
   it('returns the registered root for a nested item path', () => {
     const roots = new Set(['@documents/MyCol']);
