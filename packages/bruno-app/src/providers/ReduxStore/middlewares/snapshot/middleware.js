@@ -48,7 +48,7 @@ const getWorkspaceCollectionSnapshotKey = (workspacePathname, collectionPathname
  * Serialize the current app state into a snapshot format
  * Persists array-based schema and supports lookup hydration.
  */
-const serializeSnapshot = async (state) => {
+export const serializeSnapshot = async (state) => {
   const { workspaces, collections, tabs, logs, globalEnvironments } = state;
   const snapshotHydration = state.app?.snapshotHydration;
   const activeWorkspaceCollectionSortOrder = normalizeCollectionSortOrder(collections.collectionSortOrder);
@@ -89,7 +89,7 @@ const serializeSnapshot = async (state) => {
       devTools: {
         open: logs.isConsoleOpen,
         activeTab: logs.activeTab ?? existingDevTools.activeTab ?? 'terminal',
-        tabs: Object.assign(existingDevTools.tabs, {
+        tabs: Object.assign({}, existingDevTools.tabs, {
           [logs.activeTab]: {}
         })
       }
