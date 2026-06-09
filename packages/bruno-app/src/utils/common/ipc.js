@@ -279,7 +279,34 @@ const createCapacitorBackend = () => {
       case 'renderer:save-collection-security-config':
         return Promise.resolve();
 
-      case 'renderer:new-request':
+      case 'renderer:new-request': {
+        // The renderer does not pass a format for new requests (Electron derives it from
+        // the collection); derive it from the request file extension — the same signal
+        // isRequestFile uses. A brand-new file must emit 'addFile', not 'change':
+        // collectionChangeFileEvent only updates an item already in the tree (matched by
+        // uid), so a 'change' for a not-yet-existing request is silently dropped. Hydrate
+        // the uid deterministically so it stays stable across a later re-synthesis, matching
+        // the synthesizeTreeForCollection read path.
+        const [pathname, request] = args;
+        const format = pathname.endsWith('.yml') ? 'yml' : 'bru';
+        hydrateRequestWithUuid(request, pathname);
+        return getPlugin().writeFile({ path: pathname, content: stringifyRequest(request, { format }) }).then(() => {
+          // Defer the tree event so it fires AFTER this invoke resolves and the renderer's
+          // own .then queues its OPEN_REQUEST task (which auto-opens the new request in a tab).
+          // Electron emits 'addFile' asynchronously from the chokidar watcher — always after
+          // the task is queued; emitting inline runs the task middleware before the task exists,
+          // so the tab never opens and the editor sits on the loading screen. A macrotask is
+          // required: the invoke -> renderer-.then chain spans several microtask hops, so
+          // queueMicrotask would still run too early.
+          setTimeout(() => {
+            emit('main:collection-tree-updated', 'addFile', {
+              meta: { collectionUid: uidFromToken(collectionRootFor(pathname, collectionRoots)), pathname, name: basename(pathname) },
+              data: request
+            });
+          }, 0);
+        });
+      }
+
       case 'renderer:save-request': {
         const [pathname, request, format] = args;
         return getPlugin().writeFile({ path: pathname, content: stringifyRequest(request, { format }) }).then(() => {

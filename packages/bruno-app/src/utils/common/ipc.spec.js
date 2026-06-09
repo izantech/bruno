@@ -1,4 +1,16 @@
 import ipc, { callIpc, collectionRootFor, __resetIpcForTests } from './ipc';
+import { stringifyRequest } from '@usebruno/filestore/web';
+
+jest.mock('@usebruno/filestore/web', () => ({
+  stringifyRequest: jest.fn(() => 'STRINGIFIED'),
+  stringifyCollection: jest.fn(),
+  stringifyFolder: jest.fn(),
+  stringifyEnvironment: jest.fn(),
+  parseRequest: jest.fn(),
+  parseCollection: jest.fn(),
+  parseFolder: jest.fn(),
+  parseEnvironment: jest.fn()
+}));
 
 const mockPlugin = {
   scanWorkspace: jest.fn(),
@@ -145,6 +157,67 @@ describe('callIpc', () => {
     const result = await callIpc('some:channel', 'arg');
     expect(window.ipcRenderer.invoke).toHaveBeenCalledWith('some:channel', 'arg');
     expect(result).toBe('result');
+  });
+});
+
+describe('capacitor backend — save paths', () => {
+  beforeEach(() => {
+    withCapacitor();
+    mockPlugin.writeFile.mockResolvedValue(undefined);
+  });
+
+  const makeItem = () => ({
+    type: 'http',
+    name: 'foo',
+    filename: 'foo.bru',
+    request: {
+      method: 'GET',
+      url: '{{host}}/foo',
+      params: [],
+      headers: [],
+      body: { mode: 'none' },
+      vars: { req: [], res: [] },
+      assertions: []
+    }
+  });
+
+  it('new-request derives bru format from the path, writes the file, and emits addFile with a hydrated uid', async () => {
+    const events = [];
+    ipc.on('main:collection-tree-updated', (type, val) => events.push({ type, val }));
+
+    const item = makeItem();
+    await ipc.invoke('renderer:new-request', '@documents/MyCol/foo.bru', item);
+
+    expect(stringifyRequest).toHaveBeenCalledWith(item, { format: 'bru' });
+    expect(mockPlugin.writeFile).toHaveBeenCalledWith({ path: '@documents/MyCol/foo.bru', content: 'STRINGIFIED' });
+
+    // the addFile event is deferred to a macrotask so the renderer's OPEN_REQUEST task is
+    // queued first; flush it before asserting the emit
+    await new Promise((resolve) => setTimeout(resolve, 0));
+
+    expect(events).toHaveLength(1);
+    expect(events[0].type).toBe('addFile');
+    expect(events[0].val.meta.pathname).toBe('@documents/MyCol/foo.bru');
+    expect(events[0].val.data).toBe(item);
+    expect(typeof item.uid).toBe('string');
+    expect(item.uid.length).toBeGreaterThan(0);
+  });
+
+  it('new-request derives yml format for a .yml path', async () => {
+    await ipc.invoke('renderer:new-request', '@documents/MyCol/foo.yml', makeItem());
+    expect(stringifyRequest).toHaveBeenCalledWith(expect.any(Object), { format: 'yml' });
+  });
+
+  it('save-request uses the passed format and emits change (existing item)', async () => {
+    const events = [];
+    ipc.on('main:collection-tree-updated', (type, val) => events.push({ type, val }));
+
+    const item = makeItem();
+    await ipc.invoke('renderer:save-request', '@documents/MyCol/foo.bru', item, 'bru');
+
+    expect(stringifyRequest).toHaveBeenCalledWith(item, { format: 'bru' });
+    expect(events).toHaveLength(1);
+    expect(events[0].type).toBe('change');
   });
 });
 
