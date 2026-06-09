@@ -6,6 +6,6 @@ const path = require('path');
 
 const configPath = path.join(__dirname, '../ios/App/App/capacitor.config.json');
 const config = JSON.parse(fs.readFileSync(configPath, 'utf8'));
-config.packageClassList = ['BrunoFilesystemPlugin'];
+config.packageClassList = ['BrunoFilesystemPlugin', 'BrunoHttpPlugin'];
 fs.writeFileSync(configPath, JSON.stringify(config, null, '\t') + '\n');
-console.log('capacitor.config.json patched: packageClassList = [BrunoFilesystemPlugin]');
+console.log('capacitor.config.json patched: packageClassList = [BrunoFilesystemPlugin, BrunoHttpPlugin]');

@@ -6,7 +6,7 @@ const config: CapacitorConfig & { packageClassList?: string[] } = {
   appId: 'com.usebruno.app.ios',
   appName: 'Bruno',
   webDir: 'www',
-  packageClassList: ['BrunoFilesystemPlugin'],
+  packageClassList: ['BrunoFilesystemPlugin', 'BrunoHttpPlugin'],
   ios: {
     contentInset: 'always'
   },
