@@ -219,6 +219,13 @@ describe('capacitor backend — save paths', () => {
     expect(events).toHaveLength(1);
     expect(events[0].type).toBe('change');
   });
+
+  it('mount-workspace-scratch creates the scratch dir and returns a stable token', async () => {
+    mockPlugin.mkdir.mockResolvedValue(undefined);
+    const token = await ipc.invoke('renderer:mount-workspace-scratch', { workspaceUid: 'w1', workspacePath: 'default' });
+    expect(mockPlugin.mkdir).toHaveBeenCalledWith({ path: '@documents/tmp/scratch' });
+    expect(token).toBe('@documents/tmp/scratch');
+  });
 });
 
 describe('collectionRootFor', () => {

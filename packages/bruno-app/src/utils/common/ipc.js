@@ -269,6 +269,20 @@ const createCapacitorBackend = () => {
         });
       }
 
+      case 'renderer:mount-workspace-scratch': {
+        // Electron returns a per-workspace temp scratch directory; the scratch collection it
+        // backs is what opens the workspaceOverview ("home") tab on boot. Without it
+        // mountScratchCollection rejects, no overview tab opens, activeTabUid stays null, and
+        // RequestTabPanel falls to its no-active-tab "Loading..." spinner instead of the home
+        // state. A fixed deterministic token keeps the scratch collection uid stable across
+        // relaunches; mkdir is idempotent (createDirectory withIntermediateDirectories).
+        const scratchToken = '@documents/tmp/scratch';
+        return getPlugin().mkdir({ path: scratchToken }).then(() => {
+          collectionRoots.add(scratchToken);
+          return scratchToken;
+        });
+      }
+
       case 'renderer:create-collection':
       case 'renderer:clone-collection':
       case 'renderer:rename-collection':
